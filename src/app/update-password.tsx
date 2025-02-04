@@ -8,21 +8,25 @@ import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { z } from 'zod';
 
 import { useUpdatePassword } from '@/api/auth/use-update-password';
+import { translate } from '@/core';
 import { Button, ControlledInput, FocusAwareStatusBar, Text, View } from '@/ui';
 
 type FormValues = { password: string; passwordConfirmation: string };
-const SIX = 6;
+const MIN_CHARS = 6;
 
 const schema = z
   .object({
-    password: z
-      .string()
-      .min(SIX, 'Password must be at least 6 characters long'),
+    password: z.string().min(
+      MIN_CHARS,
+      translate('updatePassword.error.shortPassword', {
+        minChars: MIN_CHARS,
+      }),
+    ),
     passwordConfirmation: z.string(),
   })
   .refine((data) => data.password === data.passwordConfirmation, {
-    message: 'Passwords must match',
-    path: ['confirmPassword'],
+    message: translate('updatePassword.error.passwordsMustMatch'),
+    path: ['passwordConfirmation'],
   });
 
 export default function UpdatePassword() {

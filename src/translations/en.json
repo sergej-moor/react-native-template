@@ -108,6 +108,10 @@
     "confirmPasswordLabel": "Confirm Password",
     "confirmPasswordPlaceholder": "Re-enter new password",
     "description": "Enter a new password for your account.",
+    "error": {
+      "passwordsMustMatch": "Passwords must match",
+      "shortPassword": "Password must be at least {{minChars}} characters"
+    },
     "errorMessage": "An error occurred while updating your password. Please try again.",
     "passwordLabel": "New Password",
     "passwordPlaceholder": "Enter new password",
