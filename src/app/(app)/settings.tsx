@@ -50,6 +50,14 @@ export default function Settings() {
               text={'settings.account.email'}
               value={userData?.email ?? ''}
             />
+            <Link
+              asChild
+              href={{
+                pathname: '/update-password',
+              }}
+            >
+              <Item text="settings.account.password" />
+            </Link>
           </ItemsContainer>
           <ItemsContainer title="settings.generale">
             <LanguageItem />

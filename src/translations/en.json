@@ -68,6 +68,7 @@
     "account": {
       "email": "Email",
       "name": "Name",
+      "password": "Password",
       "title": "Account"
     },
     "app_name": "App Name",
@@ -101,6 +102,21 @@
     "title": "Settings",
     "version": "Version",
     "website": "Website"
+  },
+  "updatePassword": {
+    "buttonLabel": "Update Password",
+    "confirmPasswordLabel": "Confirm Password",
+    "confirmPasswordPlaceholder": "Re-enter new password",
+    "description": "Enter a new password for your account.",
+    "error": {
+      "passwordsMustMatch": "Passwords must match",
+      "shortPassword": "Password must be at least {{minChars}} characters"
+    },
+    "errorMessage": "An error occurred while updating your password. Please try again.",
+    "passwordLabel": "New Password",
+    "passwordPlaceholder": "Enter new password",
+    "successMessage": "Your password has been successfully updated.",
+    "title": "Update Password"
   },
   "welcome": "Welcome to rootstrap app site",
   "www": {
