@@ -1,4 +1,4 @@
-import dayjs from 'dayjs';
+import type { Session, User } from '@supabase/supabase-js';
 import React, {
   createContext,
   useCallback,
@@ -9,170 +9,230 @@ import React, {
 } from 'react';
 import { MMKV } from 'react-native-mmkv';
 
-import { client } from '@/api';
+import { supabase } from '@/lib/supabase';
 
-const unauthorizedHttpStatusCode = 401;
-
-const storageKey = 'auth-storage';
+const storageKey = 'supabase-auth-storage';
 
 export const authStorage = new MMKV({
   id: storageKey,
 });
 
-export const HEADER_KEYS = {
-  ACCESS_TOKEN: 'access-token',
-  REFRESH_TOKEN: 'client',
-  USER_ID: 'uid',
-  EXPIRY: 'expiry',
-  AUTHORIZATION: 'Authorization',
+export const STORAGE_KEYS = {
+  SESSION: 'supabase-session',
+  USER: 'supabase-user',
 };
 
-export const storeTokens = (args: {
-  accessToken: string;
-  refreshToken: string;
-  userId: string;
-  expiration: string;
-}) => {
-  authStorage.set(HEADER_KEYS.ACCESS_TOKEN, args.accessToken);
-  authStorage.set(HEADER_KEYS.REFRESH_TOKEN, args.refreshToken);
-  authStorage.set(HEADER_KEYS.USER_ID, args.userId);
-  authStorage.set(HEADER_KEYS.EXPIRY, args.expiration);
+// Helper functions for session management
+export const getStoredSession = (): Session | null => {
+  try {
+    const sessionString = authStorage.getString(STORAGE_KEYS.SESSION);
+    return sessionString ? JSON.parse(sessionString) : null;
+  } catch {
+    return null;
+  }
 };
 
-export const getTokenDetails = () => ({
-  accessToken: authStorage.getString(HEADER_KEYS.ACCESS_TOKEN) ?? '',
-  refreshToken: authStorage.getString(HEADER_KEYS.REFRESH_TOKEN) ?? '',
-  userId: authStorage.getString(HEADER_KEYS.USER_ID) ?? '',
-  expiration: authStorage.getString(HEADER_KEYS.EXPIRY) ?? '',
-});
-
-export const clearTokens = () => {
-  authStorage.delete(HEADER_KEYS.ACCESS_TOKEN);
-  authStorage.delete(HEADER_KEYS.REFRESH_TOKEN);
-  authStorage.delete(HEADER_KEYS.USER_ID);
-  authStorage.delete(HEADER_KEYS.EXPIRY);
+export const setStoredSession = (session: Session | null): void => {
+  if (session) {
+    authStorage.set(STORAGE_KEYS.SESSION, JSON.stringify(session));
+  } else {
+    authStorage.delete(STORAGE_KEYS.SESSION);
+  }
 };
 
-// Request interceptor to add Authorization header
-client.interceptors.request.use(
-  (config) => {
-    const { accessToken, expiration } = getTokenDetails();
+export const getStoredUser = (): User | null => {
+  try {
+    const userString = authStorage.getString(STORAGE_KEYS.USER);
+    return userString ? JSON.parse(userString) : null;
+  } catch {
+    return null;
+  }
+};
 
-    // Check if token is expired
-    if (dayjs().isAfter(dayjs(expiration))) {
-      // TODO
-      // Handle token refresh logic
-      clearTokens();
-    }
+export const setStoredUser = (user: User | null): void => {
+  if (user) {
+    authStorage.set(STORAGE_KEYS.USER, JSON.stringify(user));
+  } else {
+    authStorage.delete(STORAGE_KEYS.USER);
+  }
+};
 
-    if (accessToken) {
-      config.headers[HEADER_KEYS.AUTHORIZATION] = `Bearer ${accessToken}`;
-    }
-
-    return config;
-  },
-  (error) => Promise.reject(error),
-);
-
-// Response interceptor to handle tokens
-client.interceptors.response.use(
-  (response) => {
-    const accessToken = response.headers[HEADER_KEYS.ACCESS_TOKEN] ?? '';
-    const refreshToken = response.headers[HEADER_KEYS.REFRESH_TOKEN] ?? '';
-    const userId = response.headers[HEADER_KEYS.USER_ID] ?? '';
-
-    const expiration = response.headers[HEADER_KEYS.EXPIRY]
-      ? dayjs
-          .unix(parseInt(response.headers[HEADER_KEYS.EXPIRY], 10))
-          .toISOString()
-      : dayjs().add(1, 'hour').toISOString();
-
-    if (accessToken && refreshToken && userId && expiration) {
-      storeTokens({ accessToken, refreshToken, userId, expiration });
-    }
-
-    return response;
-  },
-  (error) => Promise.reject(error),
-);
+export const clearAuthStorage = (): void => {
+  authStorage.delete(STORAGE_KEYS.SESSION);
+  authStorage.delete(STORAGE_KEYS.USER);
+};
 
 interface AuthContextProps {
-  token: string | null;
+  user: User | null;
+  session: Session | null;
   isAuthenticated: boolean;
   loading: boolean;
-  ready: boolean;
-  logout: () => void;
+  ready: boolean; // For backwards compatibility with existing components
+  logout: () => Promise<void>;
+  refreshSession: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
 
+const useAuthStateHandling = () => {
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const updateAuthState = useCallback(
+    (newSession: Session | null, newUser: User | null) => {
+      setSession(newSession);
+      setUser(newUser);
+      setStoredSession(newSession);
+      setStoredUser(newUser);
+    },
+    [],
+  );
+
+  return { user, session, loading, setLoading, updateAuthState };
+};
+
+const useAuthActions = (
+  updateAuthState: (session: Session | null, user: User | null) => void,
+) => {
+  const refreshSession = useCallback(async () => {
+    try {
+      const { data, error } = await supabase.auth.refreshSession();
+
+      if (error) {
+        console.error('Error refreshing session:', error);
+        clearAuthStorage();
+        updateAuthState(null, null);
+        return;
+      }
+
+      if (data.session) {
+        updateAuthState(data.session, data.user);
+      }
+    } catch (error) {
+      console.error('Error refreshing session:', error);
+      clearAuthStorage();
+      updateAuthState(null, null);
+    }
+  }, [updateAuthState]);
+
+  const logout = useCallback(async () => {
+    try {
+      await supabase.auth.signOut();
+      clearAuthStorage();
+      updateAuthState(null, null);
+    } catch (error) {
+      console.error('Error signing out:', error);
+      clearAuthStorage();
+      updateAuthState(null, null);
+    }
+  }, [updateAuthState]);
+
+  return { refreshSession, logout };
+};
+
+const useAuthInitialization = (
+  updateAuthState: (session: Session | null, user: User | null) => void,
+  setLoading: (loading: boolean) => void,
+) =>
+  useCallback(async () => {
+    try {
+      const storedSession = getStoredSession();
+      const storedUser = getStoredUser();
+
+      if (storedSession && storedUser) {
+        const MILLISECONDS_TO_SECONDS = 1000;
+        const now = Math.round(Date.now() / MILLISECONDS_TO_SECONDS);
+        if (storedSession.expires_at && storedSession.expires_at > now) {
+          await supabase.auth.setSession(storedSession);
+          updateAuthState(storedSession, storedUser);
+          setLoading(false);
+          return;
+        }
+      }
+
+      const {
+        data: { session: currentSession },
+        error,
+      } = await supabase.auth.getSession();
+
+      if (error) {
+        console.error('Error getting session:', error);
+        clearAuthStorage();
+        updateAuthState(null, null);
+      } else if (currentSession) {
+        updateAuthState(currentSession, currentSession.user);
+      } else {
+        clearAuthStorage();
+        updateAuthState(null, null);
+      }
+    } catch (error) {
+      console.error('Error initializing auth:', error);
+      clearAuthStorage();
+      updateAuthState(null, null);
+    } finally {
+      setLoading(false);
+    }
+  }, [updateAuthState, setLoading]);
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [token, setToken] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [ready, setReady] = useState(false);
-
-  const checkToken = useCallback(() => {
-    const storedToken = authStorage.getString(HEADER_KEYS.ACCESS_TOKEN);
-    const expiration = authStorage.getString(HEADER_KEYS.EXPIRY);
-
-    if (!storedToken || !expiration) {
-      setToken(null);
-      setLoading(false);
-      setReady(true);
-      return;
-    }
-
-    const isExpired = dayjs().isAfter(dayjs(expiration));
-
-    if (isExpired) {
-      setToken(null); // Token expired, clear it
-    } else {
-      setToken(storedToken); // Token is valid, set it
-    }
-
-    setLoading(false);
-    setReady(true);
-  }, []);
-
-  const logout = () => {
-    clearTokens();
-    setToken(null);
-  };
+  const { user, session, loading, setLoading, updateAuthState } =
+    useAuthStateHandling();
+  const { refreshSession, logout } = useAuthActions(updateAuthState);
+  const initializeAuth = useAuthInitialization(updateAuthState, setLoading);
 
   useEffect(() => {
-    try {
-      checkToken();
-    } catch {
-      setReady(true);
-    }
-    const requestInterceptor = client.interceptors.response.use(
-      (config) => {
-        if (config.status === unauthorizedHttpStatusCode) {
-          logout();
-        }
-        checkToken();
-        return config;
-      },
-      (error) => Promise.reject(error),
-    );
+    initializeAuth();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
+      // eslint-disable-next-line no-console
+      console.log('Auth state changed:', event, currentSession?.user?.email);
+
+      switch (event) {
+        case 'SIGNED_IN':
+        case 'TOKEN_REFRESHED':
+          if (currentSession) {
+            updateAuthState(currentSession, currentSession.user);
+          }
+          break;
+        case 'SIGNED_OUT':
+          clearAuthStorage();
+          updateAuthState(null, null);
+          break;
+        case 'PASSWORD_RECOVERY':
+          break;
+        case 'USER_UPDATED':
+          if (currentSession) {
+            updateAuthState(currentSession, currentSession.user);
+          }
+          break;
+      }
+
+      setLoading(false);
+    });
 
     return () => {
-      client.interceptors.request.eject(requestInterceptor);
+      subscription.unsubscribe();
     };
-  }, [checkToken]);
+  }, [initializeAuth, updateAuthState, setLoading]);
 
   const values = useMemo(
     () => ({
-      token,
-      isAuthenticated: !!token,
+      user,
+      session,
+      isAuthenticated: !!session && !!user,
       loading,
-      ready,
+      ready: !loading,
       logout,
+      refreshSession,
     }),
-    [loading, ready, token],
+    [user, session, loading, logout, refreshSession],
   );
+
   return <AuthContext.Provider value={values}>{children}</AuthContext.Provider>;
 };
 

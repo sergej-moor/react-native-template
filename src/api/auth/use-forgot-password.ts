@@ -1,6 +1,7 @@
+import { Env } from '@env';
 import { createMutation } from 'react-query-kit';
 
-import { client } from '../common';
+import { supabase } from '@/lib/supabase';
 
 type Variables = {
   email: string;
@@ -10,22 +11,20 @@ type Response = {
   message: string;
 };
 
-// Should be replaced with the app's web url.
-const redirectUrl = 'https://example.com';
-
-const sendForgotPasswordInstructions = async (variables: Variables) => {
-  const { data } = await client({
-    url: '/v1/users/password', // Dummy endpoint for forgot password
-    method: 'POST',
-    data: {
-      email: variables.email,
-      redirect_url: redirectUrl,
-    },
-    headers: {
-      'Content-Type': 'application/json',
-    },
+const sendForgotPasswordInstructions = async (
+  variables: Variables,
+): Promise<Response> => {
+  const { error } = await supabase.auth.resetPasswordForEmail(variables.email, {
+    redirectTo: `${Env.WEBSITE_URL}/update-password`,
   });
-  return data;
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return {
+    message: 'Password reset instructions sent to your email',
+  };
 };
 
 export const useForgotPassword = createMutation<Response, Variables>({
