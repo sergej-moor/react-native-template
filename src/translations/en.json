@@ -75,10 +75,15 @@
     "arabic": "Arabic",
     "deleteAccount": {
       "cancel": "Cancel",
-      "confirmMessage": "Are you sure you want to delete your account? This action cannot be undone.",
-      "confirmTitle": "Confirm Delete",
+      "confirmMessage": "Are you sure you want to delete your account?",
+      "confirmTitle": "Delete Account",
       "delete": "Delete",
-      "title": "Delete account"
+      "deleteForever": "Delete Forever",
+      "finalConfirmMessage": "This is your final warning. Deleting your account will permanently remove all your data and cannot be undone. You will lose access to your account immediately.",
+      "finalConfirmTitle": "Final Confirmation",
+      "iUnderstand": "I Understand",
+      "title": "Delete account",
+      "warningMessage": "⚠️ WARNING: This action is permanent and irreversible. All your data, settings, and account information will be lost forever."
     },
     "english": "English",
     "generale": "General",

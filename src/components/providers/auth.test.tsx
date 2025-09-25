@@ -1,17 +1,22 @@
+import type { Session, User } from '@supabase/supabase-js';
 import { act, renderHook } from '@testing-library/react-hooks';
 import { waitFor } from '@testing-library/react-native';
-import dayjs from 'dayjs';
 
 import { Text, TouchableOpacity, View } from '@/components/ui';
-import { fireEvent, render, screen } from '@/lib/test-utils';
+import { render, screen } from '@/lib/test-utils';
 
 import {
   AuthProvider,
-  clearTokens,
-  getTokenDetails,
-  storeTokens,
+  clearAuthStorage,
+  getStoredSession,
+  getStoredUser,
+  setStoredSession,
+  setStoredUser,
   useAuth,
 } from './auth';
+
+const SESSION_EXPIRES_IN_SECONDS = 3600;
+const MILLISECONDS_TO_SECONDS = 1000;
 
 // Mock MMKV Storage
 jest.mock('react-native-mmkv', () => {
@@ -25,21 +30,28 @@ jest.mock('react-native-mmkv', () => {
   };
 });
 
-// Mock API client interceptors
-jest.mock('@/api', () => ({
-  client: {
-    interceptors: {
-      request: { use: jest.fn(), eject: jest.fn() },
-      response: { use: jest.fn(), eject: jest.fn() },
-    },
+// Mock Supabase client
+const mockSupabase = {
+  auth: {
+    getSession: jest.fn(),
+    setSession: jest.fn(),
+    onAuthStateChange: jest.fn(() => ({
+      data: { subscription: { unsubscribe: jest.fn() } },
+    })),
+    signOut: jest.fn(),
   },
+};
+
+jest.mock('@/lib/supabase', () => ({
+  supabase: mockSupabase,
 }));
 
 const TestComponent = () => {
-  const { token, isAuthenticated, loading, ready, logout } = useAuth();
+  const { user, session, isAuthenticated, loading, ready, logout } = useAuth();
   return (
     <View>
-      <Text testID="token">{token}</Text>
+      <Text testID="user-email">{user?.email ?? 'no-user'}</Text>
+      <Text testID="has-session">{session ? 'has-session' : 'no-session'}</Text>
       <Text testID="isAuthenticated">{isAuthenticated ? 'true' : 'false'}</Text>
       <Text testID="loading">{loading ? 'true' : 'false'}</Text>
       <Text testID="ready">{ready ? 'true' : 'false'}</Text>
@@ -50,74 +62,72 @@ const TestComponent = () => {
   );
 };
 
-const mockedAccessToken = 'access-token';
-const mockedValidToken = 'valid-token';
-const mockedRefreshToken = 'refresh-token';
-const mockedExpiryDate = '2025-01-17T00:00:00Z';
-const mockedUserId = 'user-id';
+const mockUser: User = {
+  id: 'user-123',
+  email: 'test@example.com',
+  created_at: '2023-01-01T00:00:00Z',
+  updated_at: '2023-01-01T00:00:00Z',
+  aud: 'authenticated',
+  role: 'authenticated',
+  app_metadata: {},
+  user_metadata: { name: 'Test User' },
+  identities: [],
+  confirmation_sent_at: '2023-01-01T00:00:00Z',
+  confirmed_at: '2023-01-01T00:00:00Z',
+  email_confirmed_at: '2023-01-01T00:00:00Z',
+};
 
-describe('Auth Utilities', () => {
+const createMockSession = (): Session => ({
+  access_token: 'access-token-123',
+  refresh_token: 'refresh-token-123',
+  expires_in: SESSION_EXPIRES_IN_SECONDS,
+  expires_at:
+    Math.floor(Date.now() / MILLISECONDS_TO_SECONDS) +
+    SESSION_EXPIRES_IN_SECONDS,
+  token_type: 'bearer',
+  user: mockUser,
+});
+
+describe('Auth Storage Utilities', () => {
   afterEach(() => {
-    clearTokens();
+    clearAuthStorage();
   });
 
-  it('stores tokens correctly', () => {
-    storeTokens({
-      accessToken: mockedAccessToken,
-      refreshToken: mockedRefreshToken,
-      userId: mockedUserId,
-      expiration: mockedExpiryDate,
-    });
-
-    const tokens = getTokenDetails();
-    expect(tokens).toEqual({
-      accessToken: mockedAccessToken,
-      refreshToken: mockedRefreshToken,
-      userId: mockedUserId,
-      expiration: mockedExpiryDate,
-    });
+  it('stores and retrieves user correctly', () => {
+    setStoredUser(mockUser);
+    const retrievedUser = getStoredUser();
+    expect(retrievedUser).toEqual(mockUser);
   });
 
-  it('clears tokens correctly', () => {
-    storeTokens({
-      accessToken: mockedAccessToken,
-      refreshToken: mockedRefreshToken,
-      userId: mockedUserId,
-      expiration: mockedExpiryDate,
-    });
-    clearTokens();
+  it('stores and retrieves session correctly', () => {
+    const mockSession = createMockSession();
+    setStoredSession(mockSession);
+    const retrievedSession = getStoredSession();
+    expect(retrievedSession).toEqual(mockSession);
+  });
 
-    const tokens = getTokenDetails();
-    expect(tokens).toEqual({
-      accessToken: '',
-      refreshToken: '',
-      userId: '',
-      expiration: '',
-    });
+  it('clears storage correctly', () => {
+    const mockSession = createMockSession();
+    setStoredUser(mockUser);
+    setStoredSession(mockSession);
+
+    clearAuthStorage();
+
+    expect(getStoredUser()).toBeNull();
+    expect(getStoredSession()).toBeNull();
   });
 });
 
 describe('AuthProvider', () => {
-  it('provides initial state correctly', () => {
-    const { result } = renderHook(() => useAuth(), {
-      wrapper: AuthProvider,
-    });
-
-    expect(result.current).toEqual({
-      token: null,
-      isAuthenticated: false,
-      loading: false,
-      ready: true,
-      logout: expect.any(Function),
-    });
+  beforeEach(() => {
+    jest.clearAllMocks();
+    clearAuthStorage();
   });
 
-  it('handles token state correctly', async () => {
-    storeTokens({
-      accessToken: mockedValidToken,
-      refreshToken: mockedRefreshToken,
-      userId: mockedUserId,
-      expiration: dayjs().add(1, 'hour').toISOString(),
+  it('provides initial state correctly when no session exists', async () => {
+    mockSupabase.auth.getSession.mockResolvedValue({
+      data: { session: null },
+      error: null,
     });
 
     const { result } = renderHook(() => useAuth(), {
@@ -125,66 +135,110 @@ describe('AuthProvider', () => {
     });
 
     await waitFor(() => {
-      expect(result.current.isAuthenticated).toBe(true);
+      expect(result.current.loading).toBe(false);
     });
 
-    expect(result.current.token).toBe('valid-token');
-    expect(result.current.loading).toBe(false);
+    expect(result.current.isAuthenticated).toBe(false);
     expect(result.current.ready).toBe(true);
   });
 
-  it('logs out correctly', () => {
+  it('handles existing session correctly', async () => {
+    const mockSession = createMockSession();
+    mockSupabase.auth.getSession.mockResolvedValue({
+      data: { session: mockSession },
+      error: null,
+    });
+
     const { result } = renderHook(() => useAuth(), {
       wrapper: AuthProvider,
     });
 
-    act(() => {
-      result.current.logout();
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
     });
 
-    expect(getTokenDetails()).toEqual({
-      accessToken: '',
-      refreshToken: '',
-      userId: '',
-      expiration: '',
+    expect(result.current.user).toEqual(mockUser);
+    expect(result.current.isAuthenticated).toBe(true);
+    expect(result.current.ready).toBe(true);
+  });
+
+  it('logs out correctly', async () => {
+    const mockSession = createMockSession();
+    mockSupabase.auth.signOut.mockResolvedValue({ error: null });
+    mockSupabase.auth.getSession.mockResolvedValue({
+      data: { session: mockSession },
+      error: null,
     });
-    expect(result.current.isAuthenticated).toBe(false);
+
+    const { result } = renderHook(() => useAuth(), {
+      wrapper: AuthProvider,
+    });
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    await act(async () => {
+      await result.current.logout();
+    });
+
+    expect(mockSupabase.auth.signOut).toHaveBeenCalled();
   });
 });
-describe('TestComponent', () => {
-  afterEach(() => {
-    clearTokens();
+
+describe('TestComponent - Authenticated', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    clearAuthStorage();
   });
 
-  it('renders correctly and handles logout', async () => {
-    // Set initial tokens
-    storeTokens({
-      accessToken: mockedValidToken,
-      refreshToken: mockedRefreshToken,
-      userId: mockedUserId,
-      expiration: dayjs().add(1, 'hour').toISOString(),
+  it('renders correctly with authenticated user', async () => {
+    const mockSession = createMockSession();
+    mockSupabase.auth.getSession.mockResolvedValue({
+      data: { session: mockSession },
+      error: null,
     });
 
-    // Render the component with AuthProvider
     render(
       <AuthProvider>
         <TestComponent />
       </AuthProvider>,
     );
 
-    // Verify initial state
-    expect(screen.getByTestId('token')).toHaveTextContent('valid-token');
+    await waitFor(() => {
+      expect(screen.getByTestId('loading')).toHaveTextContent('false');
+    });
+
+    expect(screen.getByTestId('user-email')).toHaveTextContent(
+      'test@example.com',
+    );
     expect(screen.getByTestId('isAuthenticated')).toHaveTextContent('true');
-    expect(screen.getByTestId('loading')).toHaveTextContent('false');
-    expect(screen.getByTestId('ready')).toHaveTextContent('true');
+  });
+});
 
-    // Simulate logout action
-    fireEvent.press(screen.getByTestId('logout'));
+describe('TestComponent - No User', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    clearAuthStorage();
+  });
 
-    // Verify state after logout
-    expect(screen.getByTestId('token')).toHaveTextContent('');
+  it('renders correctly with no user', async () => {
+    mockSupabase.auth.getSession.mockResolvedValue({
+      data: { session: null },
+      error: null,
+    });
+
+    render(
+      <AuthProvider>
+        <TestComponent />
+      </AuthProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('loading')).toHaveTextContent('false');
+    });
+
+    expect(screen.getByTestId('user-email')).toHaveTextContent('no-user');
     expect(screen.getByTestId('isAuthenticated')).toHaveTextContent('false');
-    expect(screen.getByTestId('loading')).toHaveTextContent('false');
-    expect(screen.getByTestId('ready')).toHaveTextContent('true');
   });
 });
