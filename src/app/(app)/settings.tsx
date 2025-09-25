@@ -25,12 +25,18 @@ import { Env } from '@/lib/env';
 export default function Settings() {
   const { logout } = useAuth();
   const { data: userData } = useUser();
-  const { mutateAsync: deleteUserAsync } = useDeleteUser({
-    onSuccess: () => {
-      logout();
-    },
-    onError: (error) => showMessage({ message: error.message, type: 'danger' }),
-  });
+  const { mutateAsync: deleteUserAsync, isPending: isDeletingUser } =
+    useDeleteUser({
+      onSuccess: () => {
+        showMessage({
+          message: 'Account deleted successfully',
+          type: 'success',
+        });
+        logout();
+      },
+      onError: (error) =>
+        showMessage({ message: error.message, type: 'danger' }),
+    });
   const { colorScheme } = useColorScheme();
   const iconColor =
     colorScheme === 'dark' ? colors.neutral[400] : colors.neutral[500];
@@ -106,7 +112,11 @@ export default function Settings() {
 
           <View className="my-8">
             <ItemsContainer>
-              <DeleteAccountItem onDelete={handleDeleteUser} />
+              <DeleteAccountItem
+                onDelete={handleDeleteUser}
+                userEmail={userData?.email}
+                isDeleting={isDeletingUser}
+              />
               <Item text="settings.logout" onPress={logout} />
             </ItemsContainer>
           </View>

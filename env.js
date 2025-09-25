@@ -140,6 +140,9 @@ const clientEnvSchema = z.object({
   VAR_BOOL: z.boolean(),
   TERMS_OF_SERVICE_URL: z.string(),
   WEBSITE_URL: z.string(),
+  // Supabase configuration
+  SUPABASE_URL: z.string().min(1),
+  SUPABASE_ANON_KEY: z.string().min(1),
 });
 
 const buildTimeEnvSchema = z.object({
@@ -166,6 +169,9 @@ const _clientEnv = {
   VAR_BOOL: parseBoolean(process.env.VAR_BOOL),
   WEBSITE_URL: parseString(process.env.WEBSITE_URL),
   TERMS_OF_SERVICE_URL: parseString(process.env.TERMS_OF_SERVICE_URL),
+  // Supabase configuration
+  SUPABASE_URL: parseString(process.env.SUPABASE_URL),
+  SUPABASE_ANON_KEY: parseString(process.env.SUPABASE_ANON_KEY),
 };
 
 /**
