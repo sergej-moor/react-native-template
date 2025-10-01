@@ -1,0 +1,563 @@
+---
+title: Todo App Guide
+description: A comprehensive guide to the local-first todo app implementation
+---
+
+This guide explains the architecture and implementation of a professional, production-ready todo app that works completely offline using a local-first approach. This implementation serves as a reference for building CRUD features in your React Native app and is designed to be easily extensible to sync with a remote database like Supabase in the future.
+
+## Overview
+
+The todo app demonstrates:
+
+- **Local-First Architecture**: All data is stored locally using MMKV for instant performance
+- **Optimistic Updates**: Immediate UI feedback with automatic rollback on errors
+- **Type Safety**: Full TypeScript coverage with strict types
+- **React Query Integration**: Efficient data fetching and cache management
+- **Database-Ready Design**: Types and structure prepared for future Supabase integration
+- **Error Handling**: Robust error handling with fallback strategies
+- **Soft Deletes**: Support for undo functionality and sync reconciliation
+
+## Architecture
+
+### Directory Structure
+
+```
+src/
+├── lib/todos/
+│   ├── types.ts          # TypeScript type definitions
+│   ├── storage.ts        # MMKV storage operations
+│   ├── utils.ts          # Helper functions (filtering, sorting, validation)
+│   └── index.ts          # Public API exports
+│
+└── api/todos/
+    ├── use-todos.ts              # Query hook for fetching todos
+    ├── use-create-todo.ts        # Mutation hook for creating
+    ├── use-update-todo.ts        # Mutation hook for updating
+    ├── use-delete-todo.ts        # Mutation hook for deleting
+    ├── use-toggle-todo.ts        # Mutation hook for toggling completion
+    ├── use-clear-completed.ts    # Mutation hook for clearing completed
+    └── index.ts                  # Public API exports
+```
+
+## Type System
+
+### Core Types
+
+The type system is designed to be compatible with Supabase from day one:
+
+```typescript
+type Todo = {
+  id: string; // UUID (Supabase-compatible)
+  title: string; // Required, max 200 chars
+  description?: string; // Optional, max 1000 chars
+  completed: boolean; // Completion status
+  createdAt: string; // ISO 8601 timestamp
+  updatedAt: string; // ISO 8601 timestamp
+  deletedAt?: string; // Soft delete timestamp
+  userId?: string; // For future multi-user support
+  syncStatus?: SyncStatus; // For future sync functionality
+  lastSyncedAt?: string; // Last successful sync time
+};
+```
+
+### Input Types
+
+```typescript
+type CreateTodoInput = {
+  title: string;
+  description?: string;
+};
+
+type UpdateTodoInput = {
+  id: string;
+  title?: string;
+  description?: string;
+  completed?: boolean;
+};
+```
+
+### Utility Types
+
+```typescript
+type TodoFilters = 'all' | 'active' | 'completed';
+type TodoSortBy = 'createdAt' | 'updatedAt' | 'title';
+type SyncStatus = 'synced' | 'pending' | 'error';
+```
+
+## Storage Layer
+
+### MMKV Storage
+
+The storage layer uses MMKV for fast, synchronous local storage:
+
+```typescript
+import { getTodos, addTodo, updateTodo, deleteTodo } from '@/lib/todos';
+
+// Get all non-deleted todos
+const todos = getTodos();
+
+// Get a specific todo
+const todo = getTodoById('todo-id');
+
+// Add a new todo
+await addTodo(newTodo);
+
+// Update an existing todo
+await updateTodo('todo-id', { title: 'Updated title' });
+
+// Soft delete a todo
+await deleteTodo('todo-id');
+
+// Restore a deleted todo
+await restoreTodo('todo-id');
+
+// Permanently delete a todo
+await permanentlyDeleteTodo('todo-id');
+
+// Clear all completed todos
+await clearCompletedTodos();
+```
+
+### Storage Features
+
+- **Atomic Operations**: Each operation is atomic to prevent data corruption
+- **Soft Deletes**: Todos are marked with `deletedAt` instead of being removed
+- **Error Handling**: All operations include try-catch with meaningful errors
+- **Type Safety**: Full TypeScript support with proper return types
+
+### Why Soft Deletes?
+
+Soft deletes provide several benefits:
+
+1. **Undo Functionality**: Users can restore accidentally deleted items
+2. **Sync Reconciliation**: When syncing with a database, deleted items need to be tracked
+3. **Data Recovery**: Deleted data can be recovered if needed
+4. **Audit Trail**: Keep a history of deletions
+
+## React Query Integration
+
+### Fetching Todos
+
+```typescript
+import { useTodos } from '@/api/todos';
+
+function TodoList() {
+  const { data: todos, isLoading, error } = useTodos();
+
+  if (isLoading) return <LoadingSpinner />;
+  if (error) return <ErrorMessage error={error} />;
+
+  return (
+    <View>
+      {todos?.map((todo) => (
+        <TodoItem key={todo.id} todo={todo} />
+      ))}
+    </View>
+  );
+}
+```
+
+### Creating Todos
+
+```typescript
+import { useCreateTodo } from '@/api/todos';
+
+function AddTodoForm() {
+  const createTodo = useCreateTodo();
+
+  const handleSubmit = (data: CreateTodoInput) => {
+    createTodo.mutate(data, {
+      onSuccess: () => {
+        // Todo created successfully
+        showToast('Todo created!');
+      },
+      onError: (error) => {
+        // Handle error
+        showToast('Failed to create todo');
+      },
+    });
+  };
+
+  return <Form onSubmit={handleSubmit} />;
+}
+```
+
+### Updating Todos
+
+```typescript
+import { useUpdateTodo } from '@/api/todos';
+
+function EditTodo({ todoId }: { todoId: string }) {
+  const updateTodo = useUpdateTodo();
+
+  const handleUpdate = (data: UpdateTodoInput) => {
+    updateTodo.mutate(
+      { id: todoId, ...data },
+      {
+        onSuccess: () => {
+          showToast('Todo updated!');
+        },
+      }
+    );
+  };
+
+  return <Form onSubmit={handleUpdate} />;
+}
+```
+
+### Toggling Completion
+
+```typescript
+import { useToggleTodo } from '@/api/todos';
+
+function TodoItem({ todo }: { todo: Todo }) {
+  const toggleTodo = useToggleTodo();
+
+  const handleToggle = () => {
+    toggleTodo.mutate({
+      id: todo.id,
+      completed: !todo.completed,
+    });
+  };
+
+  return (
+    <Pressable onPress={handleToggle}>
+      <Checkbox checked={todo.completed} />
+      <Text>{todo.title}</Text>
+    </Pressable>
+  );
+}
+```
+
+### Deleting Todos
+
+```typescript
+import { useDeleteTodo } from '@/api/todos';
+
+function TodoItem({ todo }: { todo: Todo }) {
+  const deleteTodo = useDeleteTodo();
+
+  const handleDelete = () => {
+    deleteTodo.mutate(
+      { id: todo.id },
+      {
+        onSuccess: () => {
+          showToast('Todo deleted');
+        },
+      }
+    );
+  };
+
+  return <Button onPress={handleDelete}>Delete</Button>;
+}
+```
+
+### Clearing Completed Todos
+
+```typescript
+import { useClearCompleted } from '@/api/todos';
+
+function TodoFooter() {
+  const clearCompleted = useClearCompleted();
+
+  const handleClear = () => {
+    clearCompleted.mutate(undefined, {
+      onSuccess: () => {
+        showToast('Completed todos cleared');
+      },
+    });
+  };
+
+  return <Button onPress={handleClear}>Clear Completed</Button>;
+}
+```
+
+## Optimistic Updates
+
+All mutations implement optimistic updates for instant user feedback:
+
+### How It Works
+
+1. **On Mutation Start** (`onMutate`):
+
+   - Cancel in-flight queries to prevent race conditions
+   - Save current state for rollback
+   - Immediately update the UI with optimistic data
+
+2. **On Success**:
+
+   - Invalidate queries to refetch fresh data
+   - Confirm the optimistic update
+
+3. **On Error**:
+   - Rollback to the previous state
+   - Show error message to user
+
+### Example: Optimistic Create
+
+```typescript
+export const useCreateTodo = createMutation<Todo, CreateTodoInput>({
+  mutationFn: async (input) => {
+    return addTodo(newTodo);
+  },
+  onMutate: async (input) => {
+    // Cancel queries
+    await queryClient.cancelQueries({ queryKey: ['todos'] });
+
+    // Save snapshot
+    const previousTodos = queryClient.getQueryData<Todo[]>(['todos']);
+
+    // Optimistically update UI
+    queryClient.setQueryData<Todo[]>(['todos'], (old) => [
+      optimisticTodo,
+      ...(old || []),
+    ]);
+
+    // Return context for rollback
+    return { previousTodos };
+  },
+  onError: (error, variables, context) => {
+    // Rollback on error
+    if (context?.previousTodos) {
+      queryClient.setQueryData(['todos'], context.previousTodos);
+    }
+  },
+  onSuccess: () => {
+    // Refetch to ensure consistency
+    queryClient.invalidateQueries({ queryKey: ['todos'] });
+  },
+});
+```
+
+## Helper Functions
+
+### Filtering
+
+```typescript
+import { filterTodos } from '@/lib/todos';
+
+const activeTodos = filterTodos(todos, 'active');
+const completedTodos = filterTodos(todos, 'completed');
+const allTodos = filterTodos(todos, 'all');
+```
+
+### Sorting
+
+```typescript
+import { sortTodos } from '@/lib/todos';
+
+const sortedByDate = sortTodos(todos, 'createdAt');
+const sortedByUpdate = sortTodos(todos, 'updatedAt');
+const sortedByTitle = sortTodos(todos, 'title');
+```
+
+### Statistics
+
+```typescript
+import { getTodoStats } from '@/lib/todos';
+
+const stats = getTodoStats(todos);
+// { total: 10, active: 5, completed: 5 }
+```
+
+### Validation
+
+```typescript
+import { validateTodoTitle, validateTodoDescription } from '@/lib/todos';
+
+const titleValidation = validateTodoTitle(title);
+if (!titleValidation.valid) {
+  console.error(titleValidation.error);
+}
+
+const descValidation = validateTodoDescription(description);
+if (!descValidation.valid) {
+  console.error(descValidation.error);
+}
+```
+
+## Error Handling
+
+### Storage Errors
+
+The storage layer handles various error scenarios:
+
+- **Corrupted Data**: Returns empty array and logs error
+- **Storage Quota**: Throws error with clear message
+- **Invalid Operations**: Throws error (e.g., updating non-existent todo)
+
+### React Query Errors
+
+React Query automatically handles:
+
+- **Network Errors**: Not applicable for local-first approach
+- **Mutation Errors**: Rollback optimistic updates
+- **Query Errors**: Return error state to components
+
+### Best Practices
+
+```typescript
+import { useTodos } from '@/api/todos';
+
+function TodoList() {
+  const { data, error, isLoading } = useTodos();
+
+  // Handle loading state
+  if (isLoading) {
+    return <LoadingSpinner />;
+  }
+
+  // Handle error state
+  if (error) {
+    return (
+      <View>
+        <Text>Failed to load todos</Text>
+        <Button onPress={() => queryClient.invalidateQueries(['todos'])}>
+          Retry
+        </Button>
+      </View>
+    );
+  }
+
+  // Handle empty state
+  if (!data || data.length === 0) {
+    return <EmptyState />;
+  }
+
+  return <TodoListView todos={data} />;
+}
+```
+
+## Performance Considerations
+
+### MMKV Performance
+
+- MMKV is synchronous and extremely fast (microseconds)
+- No need for loading states when reading from storage
+- Suitable for datasets up to several thousand items
+
+### React Query Caching
+
+- Todos are cached in memory after first load
+- No unnecessary re-renders thanks to React Query's smart diffing
+- Optimistic updates provide instant feedback
+
+### List Rendering
+
+When building UI components:
+
+- Use `FlashList` for large todo lists (100+ items)
+- Use `React.memo` to prevent unnecessary re-renders
+- Use `useCallback` for event handlers
+
+```typescript
+import { FlashList } from '@shopify/flash-list';
+
+const TodoList = React.memo(({ todos }: { todos: Todo[] }) => {
+  const renderItem = useCallback(
+    ({ item }: { item: Todo }) => <TodoItem todo={item} />,
+    []
+  );
+
+  return (
+    <FlashList
+      data={todos}
+      renderItem={renderItem}
+      estimatedItemSize={60}
+      keyExtractor={(item) => item.id}
+    />
+  );
+});
+```
+
+## Future: Supabase Sync
+
+The current implementation is designed to seamlessly integrate with Supabase:
+
+### Database Schema
+
+```sql
+CREATE TABLE todos (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  title TEXT NOT NULL CHECK (char_length(title) <= 200),
+  description TEXT CHECK (char_length(description) <= 1000),
+  completed BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  deleted_at TIMESTAMPTZ
+);
+```
+
+### Sync Strategy
+
+1. **Local-First**: Continue to work offline
+2. **Background Sync**: Queue operations when online
+3. **Conflict Resolution**: Last-write-wins based on timestamps
+4. **Realtime Updates**: Subscribe to changes from other devices
+
+### Migration Path
+
+1. Add Supabase client configuration
+2. Implement sync queue for offline operations
+3. Add conflict resolution logic
+4. Enable realtime subscriptions
+5. Migrate local data to Supabase on first sync
+
+The existing types and structure require no changes - just add sync logic!
+
+## Testing
+
+### Unit Tests Example
+
+```typescript
+import { filterTodos, sortTodos, getTodoStats } from '@/lib/todos';
+
+describe('Todo Utils', () => {
+  const mockTodos: Todo[] = [
+    {
+      id: '1',
+      title: 'Todo 1',
+      completed: false,
+      createdAt: '2024-01-01T00:00:00Z',
+      updatedAt: '2024-01-01T00:00:00Z',
+    },
+    {
+      id: '2',
+      title: 'Todo 2',
+      completed: true,
+      createdAt: '2024-01-02T00:00:00Z',
+      updatedAt: '2024-01-02T00:00:00Z',
+    },
+  ];
+
+  test('filters active todos', () => {
+    const active = filterTodos(mockTodos, 'active');
+    expect(active).toHaveLength(1);
+    expect(active[0].completed).toBe(false);
+  });
+
+  test('calculates stats correctly', () => {
+    const stats = getTodoStats(mockTodos);
+    expect(stats).toEqual({
+      total: 2,
+      active: 1,
+      completed: 1,
+    });
+  });
+});
+```
+
+## Summary
+
+This todo app implementation demonstrates:
+
+- Professional architecture following project conventions
+- Type-safe operations with full TypeScript coverage
+- Instant performance with local-first approach
+- Optimistic updates for excellent UX
+- Database-ready design for future scaling
+- Comprehensive error handling
+- Production-ready code quality
+
+Use this as a reference for building more complex CRUD features in your React Native applications.

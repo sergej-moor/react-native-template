@@ -1,7 +1,5 @@
 ---
-description: Project-specific coding conventions and structure
-globs: 
-alwaysApply: false
+alwaysApply: true
 ---
 # Project Base Rules
 

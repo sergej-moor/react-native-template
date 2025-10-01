@@ -7,6 +7,7 @@ import {
   Feed as FeedIcon,
   Settings as SettingsIcon,
   Style as StyleIcon,
+  Todos as TodosIcon,
 } from '@/components/ui/icons';
 import { useIsFirstTime } from '@/lib';
 
@@ -38,6 +39,14 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <FeedIcon color={color} />,
           headerRight: () => <CreateNewPostLink />,
           tabBarButtonTestID: 'feed-tab',
+        }}
+      />
+      <Tabs.Screen
+        name="todos"
+        options={{
+          title: 'Todos',
+          tabBarIcon: ({ color }) => <TodosIcon color={color} />,
+          tabBarButtonTestID: 'todos-tab',
         }}
       />
       <Tabs.Screen

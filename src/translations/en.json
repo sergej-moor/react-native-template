@@ -108,6 +108,40 @@
     "version": "Version",
     "website": "Website"
   },
+  "todos": {
+    "clearCompleted": "Clear",
+    "completedCount": "{{count}} completed",
+    "filters": {
+      "active": "Active",
+      "all": "All",
+      "completed": "Completed"
+    },
+    "form": {
+      "createButton": "Add Todo",
+      "descriptionLabel": "Description (optional)",
+      "descriptionPlaceholder": "Add more details...",
+      "titleLabel": "Title",
+      "titlePlaceholder": "What needs to be done?",
+      "updateButton": "Update Todo"
+    },
+    "messages": {
+      "clearError": "Failed to clear completed todos",
+      "clearedCompleted": "Completed todos cleared",
+      "createError": "Failed to create todo",
+      "created": "Todo created successfully",
+      "deleteError": "Failed to delete todo",
+      "deleted": "Todo deleted",
+      "toggleError": "Failed to update todo",
+      "updateError": "Failed to update todo",
+      "updated": "Todo updated successfully"
+    },
+    "title": "My Todos",
+    "validation": {
+      "descriptionMaxLength": "Description must be 1000 characters or less",
+      "titleMaxLength": "Title must be 200 characters or less",
+      "titleRequired": "Title is required"
+    }
+  },
   "updatePassword": {
     "buttonLabel": "Update Password",
     "confirmPasswordLabel": "Confirm Password",
