@@ -3,7 +3,6 @@ import React from 'react';
 
 import type { Todo } from '@/lib/todos';
 
-import { View } from '../ui';
 import { EmptyState } from './empty-state';
 import { TodoItem } from './todo-item';
 
@@ -31,8 +30,6 @@ export const TodoList = React.memo(
 
     const keyExtractor = React.useCallback((item: Todo) => item.id, []);
 
-    const ItemSeparator = React.useCallback(() => <View className="h-3" />, []);
-
     if (todos.length === 0) {
       return <EmptyState filter={filter} />;
     }
@@ -42,10 +39,13 @@ export const TodoList = React.memo(
         data={todos}
         renderItem={renderItem}
         keyExtractor={keyExtractor}
-        estimatedItemSize={80}
-        ItemSeparatorComponent={ItemSeparator}
+        estimatedItemSize={100}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ padding: 16 }}
+        contentContainerStyle={{
+          paddingTop: 16,
+          paddingBottom: 100,
+          paddingHorizontal: 12,
+        }}
       />
     );
   },

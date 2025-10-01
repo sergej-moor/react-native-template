@@ -9,42 +9,32 @@ import { Text, View } from '../ui';
 type TodoFiltersProps = {
   activeFilter: TodoFilters;
   onFilterChange: (filter: TodoFilters) => void;
-  stats: {
-    all: number;
-    active: number;
-    completed: number;
-  };
 };
 
 export function TodoFiltersComponent({
   activeFilter,
   onFilterChange,
-  stats,
 }: TodoFiltersProps) {
   const { t } = useTranslation();
 
-  const filters: Array<{ key: TodoFilters; label: string; count: number }> = [
-    { key: 'all', label: t('todos.filters.all'), count: stats.all },
-    { key: 'active', label: t('todos.filters.active'), count: stats.active },
-    {
-      key: 'completed',
-      label: t('todos.filters.completed'),
-      count: stats.completed,
-    },
+  const filters: Array<{ key: TodoFilters; label: string }> = [
+    { key: 'all', label: t('todos.filters.all') },
+    { key: 'active', label: t('todos.filters.active') },
+    { key: 'completed', label: t('todos.filters.completed') },
   ];
 
   return (
-    <View className="flex-row gap-2">
+    <View className="flex-row gap-1 rounded-lg bg-neutral-100 p-1 dark:bg-neutral-800">
       {filters.map((filter) => {
         const isActive = activeFilter === filter.key;
         return (
           <Pressable
             key={filter.key}
             onPress={() => onFilterChange(filter.key)}
-            className={`flex-1 rounded-lg px-4 py-3 ${
+            className={`flex-1 rounded-md px-3 py-2 ${
               isActive
-                ? 'bg-primary-500 dark:bg-primary-600'
-                : 'bg-neutral-100 dark:bg-neutral-800'
+                ? 'bg-white shadow-sm dark:bg-neutral-700'
+                : 'bg-transparent'
             }`}
             accessibilityRole="button"
             accessibilityState={{ selected: isActive }}
@@ -52,20 +42,11 @@ export function TodoFiltersComponent({
             <Text
               className={`text-center text-sm font-medium ${
                 isActive
-                  ? 'text-white'
-                  : 'text-neutral-700 dark:text-neutral-300'
+                  ? 'text-neutral-900 dark:text-neutral-100'
+                  : 'text-neutral-600 dark:text-neutral-400'
               }`}
             >
               {filter.label}
-            </Text>
-            <Text
-              className={`text-center text-xs ${
-                isActive
-                  ? 'text-white/80'
-                  : 'text-neutral-500 dark:text-neutral-400'
-              }`}
-            >
-              {filter.count}
             </Text>
           </Pressable>
         );

@@ -1,7 +1,10 @@
 /* eslint-disable max-lines-per-function */
+import type { BottomSheetModal } from '@gorhom/bottom-sheet';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { Pressable } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
+import Svg, { Path } from 'react-native-svg';
 
 import {
   useClearCompleted,
@@ -11,7 +14,6 @@ import {
   useToggleTodo,
 } from '@/api/todos';
 import {
-  EmptyState,
   TodoFiltersComponent,
   TodoForm,
   TodoHeader,
@@ -21,11 +23,31 @@ import type { TodoFilters } from '@/lib/todos';
 import { filterTodos, getTodoStats } from '@/lib/todos';
 import type { CreateTodoFormData } from '@/lib/todos/validation';
 
-import { FocusAwareStatusBar, ScrollView, View } from '../../components/ui';
+import {
+  FocusAwareStatusBar,
+  Modal,
+  Text,
+  useModal,
+  View,
+} from '../../components/ui';
+import BottomSheetKeyboardAwareScrollView from '../../components/ui/modal-keyboard-aware-scroll-view';
+
+const PlusIcon = ({ color = '#fff' }: { color?: string }) => (
+  <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M12 5v14M5 12h14"
+      stroke={color}
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
 
 export default function TodosScreen() {
   const { t } = useTranslation();
   const [filter, setFilter] = React.useState<TodoFilters>('all');
+  const { ref: modalRef, present, dismiss } = useModal();
 
   const { data: allTodos = [], isLoading } = useTodos();
   const createTodo = useCreateTodo();
@@ -38,33 +60,30 @@ export default function TodosScreen() {
     [allTodos, filter],
   );
 
-  const stats = React.useMemo(() => {
-    const todoStats = getTodoStats(allTodos);
-    return {
-      all: todoStats.total,
-      active: todoStats.active,
-      completed: todoStats.completed,
-    };
-  }, [allTodos]);
+  const stats = React.useMemo(() => getTodoStats(allTodos), [allTodos]);
 
   const handleCreateTodo = React.useCallback(
     (data: CreateTodoFormData) => {
-      createTodo.mutate(data, {
-        onSuccess: () => {
-          showMessage({
-            message: t('todos.messages.created'),
-            type: 'success',
-          });
+      createTodo.mutate(
+        { title: data.title, description: data.description },
+        {
+          onSuccess: () => {
+            showMessage({
+              message: t('todos.messages.created'),
+              type: 'success',
+            });
+            dismiss();
+          },
+          onError: () => {
+            showMessage({
+              message: t('todos.messages.createError'),
+              type: 'danger',
+            });
+          },
         },
-        onError: () => {
-          showMessage({
-            message: t('todos.messages.createError'),
-            type: 'danger',
-          });
-        },
-      });
+      );
     },
-    [createTodo, t],
+    [createTodo, t, dismiss],
   );
 
   const handleToggleTodo = React.useCallback(
@@ -128,6 +147,7 @@ export default function TodosScreen() {
     return (
       <View className="flex-1 items-center justify-center">
         <FocusAwareStatusBar />
+        <Text>Loading...</Text>
       </View>
     );
   }
@@ -136,39 +156,62 @@ export default function TodosScreen() {
     <View className="flex-1 bg-white dark:bg-neutral-950">
       <FocusAwareStatusBar />
 
-      <View className="flex-1">
-        <ScrollView>
-          <View className="gap-6 px-4 pb-4 pt-8">
-            <TodoHeader
-              completedCount={stats.completed}
-              onClearCompleted={handleClearCompleted}
-              isClearing={clearCompleted.isPending}
-            />
-
-            <TodoForm
-              onSubmit={handleCreateTodo}
-              isLoading={createTodo.isPending}
-            />
-
-            <TodoFiltersComponent
-              activeFilter={filter}
-              onFilterChange={setFilter}
-              stats={stats}
-            />
-          </View>
-        </ScrollView>
-
-        {filteredTodos.length === 0 ? (
-          <EmptyState filter={filter} />
-        ) : (
-          <TodoList
-            todos={filteredTodos}
-            filter={filter}
-            onToggle={handleToggleTodo}
-            onDelete={handleDeleteTodo}
+      {/* Header with filters and actions */}
+      <View className="border-b border-neutral-200 p-4 dark:border-neutral-800">
+        <View className="mb-3">
+          <TodoHeader
+            totalCount={stats.total}
+            completedCount={stats.completed}
+            onClearCompleted={handleClearCompleted}
+            isClearing={clearCompleted.isPending}
           />
-        )}
+        </View>
+        <TodoFiltersComponent
+          activeFilter={filter}
+          onFilterChange={setFilter}
+        />
       </View>
+
+      {/* Todo List */}
+      <View className="flex-1">
+        <TodoList
+          todos={filteredTodos}
+          filter={filter}
+          onToggle={handleToggleTodo}
+          onDelete={handleDeleteTodo}
+          onPress={() => {}}
+        />
+      </View>
+
+      {/* Floating Action Button */}
+      <View className="absolute bottom-6 right-6">
+        <Pressable
+          onPress={() => present()}
+          className="size-14 items-center justify-center rounded-full bg-blue-600 shadow-lg active:bg-blue-700 dark:bg-blue-500 dark:active:bg-blue-600"
+          accessibilityLabel={t('todos.addTodo')}
+          accessibilityRole="button"
+        >
+          <PlusIcon color="#fff" />
+        </Pressable>
+      </View>
+
+      {/* Add Todo Modal */}
+      <Modal
+        ref={modalRef as React.RefObject<BottomSheetModal>}
+        title={t('todos.addTodo')}
+        snapPoints={['50%']}
+      >
+        <BottomSheetKeyboardAwareScrollView
+          contentContainerClassName="px-4 pb-8"
+          bottomOffset={8}
+        >
+          <TodoForm
+            onSubmit={handleCreateTodo}
+            isLoading={createTodo.isPending}
+            submitLabel={t('todos.form.createButton')}
+          />
+        </BottomSheetKeyboardAwareScrollView>
+      </Modal>
     </View>
   );
 }

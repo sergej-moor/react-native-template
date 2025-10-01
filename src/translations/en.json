@@ -109,7 +109,8 @@
     "website": "Website"
   },
   "todos": {
-    "clearCompleted": "Clear",
+    "addTodo": "Add Todo",
+    "clearCompleted": "Clear Completed",
     "completedCount": "{{count}} completed",
     "filters": {
       "active": "Active",
@@ -135,7 +136,10 @@
       "updateError": "Failed to update todo",
       "updated": "Todo updated successfully"
     },
+    "noTodos": "No todos yet",
+    "progress": "{{completed}} of {{total}} completed",
     "title": "My Todos",
+    "totalCount": "{{count}} total",
     "validation": {
       "descriptionMaxLength": "Description must be 1000 characters or less",
       "titleMaxLength": "Title must be 200 characters or less",

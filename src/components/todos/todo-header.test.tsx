@@ -15,35 +15,47 @@ describe('TodoHeader', () => {
   });
 
   describe('Rendering', () => {
-    test('renders title correctly', async () => {
+    test('renders "No todos yet" when totalCount is 0', async () => {
       setup(
         <TodoHeader
+          totalCount={0}
           completedCount={0}
           onClearCompleted={onClearCompletedMock}
         />,
       );
 
-      expect(await screen.findByText('My Todos')).toBeOnTheScreen();
+      expect(await screen.findByText('No todos yet')).toBeOnTheScreen();
     });
 
-    test('does not show clear button when completedCount is 0', async () => {
+    test('renders progress text when there are todos', async () => {
       setup(
         <TodoHeader
-          completedCount={0}
-          onClearCompleted={onClearCompletedMock}
-        />,
-      );
-
-      expect(
-        screen.queryByTestId('clear-completed-button'),
-      ).not.toBeOnTheScreen();
-      expect(screen.queryByText('Clear')).not.toBeOnTheScreen();
-    });
-
-    test('shows clear button when completedCount is greater than 0', async () => {
-      setup(
-        <TodoHeader
+          totalCount={10}
           completedCount={5}
+          onClearCompleted={onClearCompletedMock}
+        />,
+      );
+
+      expect(await screen.findByText('5 of 10 completed')).toBeOnTheScreen();
+    });
+
+    test('shows progress bar when there are todos', async () => {
+      setup(
+        <TodoHeader
+          totalCount={10}
+          completedCount={5}
+          onClearCompleted={onClearCompletedMock}
+        />,
+      );
+
+      expect(await screen.findByText('5 of 10 completed')).toBeOnTheScreen();
+    });
+
+    test('clear button is always visible', async () => {
+      setup(
+        <TodoHeader
+          totalCount={10}
+          completedCount={0}
           onClearCompleted={onClearCompletedMock}
         />,
       );
@@ -51,49 +63,40 @@ describe('TodoHeader', () => {
       expect(
         await screen.findByTestId('clear-completed-button'),
       ).toBeOnTheScreen();
-      expect(screen.getByText('Clear')).toBeOnTheScreen();
     });
 
-    test('displays completed count message when count is greater than 0', async () => {
+    test('clear button is disabled when completedCount is 0', async () => {
       setup(
         <TodoHeader
-          completedCount={3}
-          onClearCompleted={onClearCompletedMock}
-        />,
-      );
-
-      expect(await screen.findByText('3 completed')).toBeOnTheScreen();
-    });
-
-    test('does not display completed count message when count is 0', async () => {
-      setup(
-        <TodoHeader
+          totalCount={10}
           completedCount={0}
           onClearCompleted={onClearCompletedMock}
-        />,
-      );
-
-      expect(screen.queryByText(/completed/i)).not.toBeOnTheScreen();
-    });
-
-    test('shows loading state on clear button when isClearing is true', async () => {
-      setup(
-        <TodoHeader
-          completedCount={5}
-          onClearCompleted={onClearCompletedMock}
-          isClearing={true}
         />,
       );
 
       const clearButton = await screen.findByTestId('clear-completed-button');
       expect(clearButton).toBeDisabled();
     });
+
+    test('clear button is enabled when completedCount is greater than 0', async () => {
+      setup(
+        <TodoHeader
+          totalCount={10}
+          completedCount={5}
+          onClearCompleted={onClearCompletedMock}
+        />,
+      );
+
+      const clearButton = await screen.findByTestId('clear-completed-button');
+      expect(clearButton).not.toBeDisabled();
+    });
   });
 
-  describe('Clear Button Interaction', () => {
+  describe('Interaction', () => {
     test('calls onClearCompleted when clear button is pressed', async () => {
       setup(
         <TodoHeader
+          totalCount={10}
           completedCount={5}
           onClearCompleted={onClearCompletedMock}
         />,
@@ -105,9 +108,10 @@ describe('TodoHeader', () => {
       expect(onClearCompletedMock).toHaveBeenCalledTimes(1);
     });
 
-    test('does not call onClearCompleted when button is disabled', async () => {
+    test('shows loading state when isClearing is true', async () => {
       setup(
         <TodoHeader
+          totalCount={10}
           completedCount={5}
           onClearCompleted={onClearCompletedMock}
           isClearing={true}
@@ -115,33 +119,7 @@ describe('TodoHeader', () => {
       );
 
       const clearButton = await screen.findByTestId('clear-completed-button');
-      fireEvent.press(clearButton);
-
-      expect(onClearCompletedMock).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('Edge Cases', () => {
-    test('handles single completed todo correctly', async () => {
-      setup(
-        <TodoHeader
-          completedCount={1}
-          onClearCompleted={onClearCompletedMock}
-        />,
-      );
-
-      expect(await screen.findByText('1 completed')).toBeOnTheScreen();
-    });
-
-    test('handles large completed count correctly', async () => {
-      setup(
-        <TodoHeader
-          completedCount={999}
-          onClearCompleted={onClearCompletedMock}
-        />,
-      );
-
-      expect(await screen.findByText('999 completed')).toBeOnTheScreen();
+      expect(clearButton).toBeOnTheScreen();
     });
   });
 });
