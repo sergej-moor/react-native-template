@@ -74,14 +74,14 @@ export const TodoItem = React.memo(
     return (
       <Swipeable
         ref={swipeableRef}
-        renderLeftActions={() => <DeleteAction />}
-        renderRightActions={onEdit ? () => <EditAction /> : undefined}
+        renderLeftActions={onEdit ? () => <EditAction /> : undefined}
+        renderRightActions={() => <DeleteAction />}
         overshootLeft={false}
         overshootRight={false}
         leftThreshold={40}
         rightThreshold={40}
-        onSwipeableLeftOpen={handleDelete}
-        onSwipeableRightOpen={handleEdit}
+        onSwipeableLeftOpen={handleEdit}
+        onSwipeableRightOpen={handleDelete}
       >
         <Pressable
           onPress={handleToggle}
