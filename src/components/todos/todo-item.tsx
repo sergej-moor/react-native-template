@@ -17,7 +17,7 @@ type TodoItemProps = {
 
 const EditAction = () => (
   <View className="mb-2 justify-center">
-    <View className="h-full items-center justify-center rounded-l-xl bg-blue-500 px-6 dark:bg-blue-600">
+    <View className="h-full items-center justify-center rounded-r-xl bg-blue-500 px-6 dark:bg-blue-600">
       <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
         <Path
           d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
@@ -40,7 +40,7 @@ const EditAction = () => (
 
 const DeleteAction = () => (
   <View className="mb-2 justify-center">
-    <View className="h-full items-center justify-center rounded-r-xl bg-red-500 px-6 dark:bg-red-600">
+    <View className="h-full items-center justify-center rounded-l-xl bg-red-500 px-6 dark:bg-red-600">
       <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
         <Path
           d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
@@ -74,14 +74,14 @@ export const TodoItem = React.memo(
     return (
       <Swipeable
         ref={swipeableRef}
-        renderLeftActions={onEdit ? () => <EditAction /> : undefined}
-        renderRightActions={() => <DeleteAction />}
+        renderLeftActions={() => <DeleteAction />}
+        renderRightActions={onEdit ? () => <EditAction /> : undefined}
         overshootLeft={false}
         overshootRight={false}
         leftThreshold={40}
         rightThreshold={40}
-        onSwipeableLeftOpen={handleEdit}
-        onSwipeableRightOpen={handleDelete}
+        onSwipeableLeftOpen={handleDelete}
+        onSwipeableRightOpen={handleEdit}
       >
         <Pressable
           onPress={handleToggle}
