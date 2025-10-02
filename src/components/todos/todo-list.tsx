@@ -11,21 +11,23 @@ type TodoListProps = {
   filter: 'all' | 'active' | 'completed';
   onToggle: (id: string, completed: boolean) => void;
   onDelete: (id: string) => void;
+  onEdit?: (todo: Todo) => void;
   onPress?: (id: string) => void;
 };
 
 export const TodoList = React.memo(
-  ({ todos, filter, onToggle, onDelete, onPress }: TodoListProps) => {
+  ({ todos, filter, onToggle, onDelete, onEdit, onPress }: TodoListProps) => {
     const renderItem = React.useCallback(
       ({ item }: { item: Todo }) => (
         <TodoItem
           todo={item}
           onToggle={onToggle}
           onDelete={onDelete}
+          onEdit={onEdit}
           onPress={onPress}
         />
       ),
-      [onToggle, onDelete, onPress],
+      [onToggle, onDelete, onEdit, onPress],
     );
 
     const keyExtractor = React.useCallback((item: Todo) => item.id, []);

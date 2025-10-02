@@ -12,6 +12,7 @@ import {
   useDeleteTodo,
   useTodos,
   useToggleTodo,
+  useUpdateTodo,
 } from '@/api/todos';
 import {
   TodoFiltersComponent,
@@ -19,7 +20,7 @@ import {
   TodoHeader,
   TodoList,
 } from '@/components/todos';
-import type { TodoFilters } from '@/lib/todos';
+import type { Todo, TodoFilters } from '@/lib/todos';
 import { filterTodos, getTodoStats } from '@/lib/todos';
 import type { CreateTodoFormData } from '@/lib/todos/validation';
 
@@ -47,10 +48,21 @@ const PlusIcon = ({ color = '#fff' }: { color?: string }) => (
 export default function TodosScreen() {
   const { t } = useTranslation();
   const [filter, setFilter] = React.useState<TodoFilters>('all');
-  const { ref: modalRef, present, dismiss } = useModal();
+  const [selectedTodo, setSelectedTodo] = React.useState<Todo | null>(null);
+  const {
+    ref: addModalRef,
+    present: presentAdd,
+    dismiss: dismissAdd,
+  } = useModal();
+  const {
+    ref: editModalRef,
+    present: presentEdit,
+    dismiss: dismissEdit,
+  } = useModal();
 
   const { data: allTodos = [], isLoading } = useTodos();
   const createTodo = useCreateTodo();
+  const updateTodo = useUpdateTodo();
   const toggleTodo = useToggleTodo();
   const deleteTodo = useDeleteTodo();
   const clearCompleted = useClearCompleted();
@@ -72,7 +84,7 @@ export default function TodosScreen() {
               message: t('todos.messages.created'),
               type: 'success',
             });
-            dismiss();
+            dismissAdd();
           },
           onError: () => {
             showMessage({
@@ -83,7 +95,48 @@ export default function TodosScreen() {
         },
       );
     },
-    [createTodo, t, dismiss],
+    [createTodo, t, dismissAdd],
+  );
+
+  const handleEditTodoPress = React.useCallback(
+    (todo: Todo) => {
+      setSelectedTodo(todo);
+      presentEdit();
+    },
+    [presentEdit],
+  );
+
+  const handleUpdateTodo = React.useCallback(
+    (data: CreateTodoFormData) => {
+      if (!selectedTodo) {
+        return;
+      }
+
+      updateTodo.mutate(
+        {
+          id: selectedTodo.id,
+          title: data.title,
+          description: data.description,
+        },
+        {
+          onSuccess: () => {
+            showMessage({
+              message: t('todos.messages.updated'),
+              type: 'success',
+            });
+            dismissEdit();
+            setSelectedTodo(null);
+          },
+          onError: () => {
+            showMessage({
+              message: t('todos.messages.updateError'),
+              type: 'danger',
+            });
+          },
+        },
+      );
+    },
+    [updateTodo, selectedTodo, t, dismissEdit],
   );
 
   const handleToggleTodo = React.useCallback(
@@ -179,6 +232,7 @@ export default function TodosScreen() {
           filter={filter}
           onToggle={handleToggleTodo}
           onDelete={handleDeleteTodo}
+          onEdit={handleEditTodoPress}
           onPress={() => {}}
         />
       </View>
@@ -186,7 +240,7 @@ export default function TodosScreen() {
       {/* Floating Action Button */}
       <View className="absolute bottom-6 right-6">
         <Pressable
-          onPress={() => present()}
+          onPress={() => presentAdd()}
           className="size-14 items-center justify-center rounded-full bg-blue-600 shadow-lg active:bg-blue-700 dark:bg-blue-500 dark:active:bg-blue-600"
           accessibilityLabel={t('todos.addTodo')}
           accessibilityRole="button"
@@ -197,7 +251,7 @@ export default function TodosScreen() {
 
       {/* Add Todo Modal */}
       <Modal
-        ref={modalRef as React.RefObject<BottomSheetModal>}
+        ref={addModalRef as React.RefObject<BottomSheetModal>}
         title={t('todos.addTodo')}
         snapPoints={['50%']}
       >
@@ -210,6 +264,30 @@ export default function TodosScreen() {
             isLoading={createTodo.isPending}
             submitLabel={t('todos.form.createButton')}
           />
+        </BottomSheetKeyboardAwareScrollView>
+      </Modal>
+
+      {/* Edit Todo Modal */}
+      <Modal
+        ref={editModalRef as React.RefObject<BottomSheetModal>}
+        title={t('todos.editTodo')}
+        snapPoints={['50%']}
+      >
+        <BottomSheetKeyboardAwareScrollView
+          contentContainerClassName="px-4 pb-8"
+          bottomOffset={8}
+        >
+          {selectedTodo && (
+            <TodoForm
+              onSubmit={handleUpdateTodo}
+              isLoading={updateTodo.isPending}
+              defaultValues={{
+                title: selectedTodo.title,
+                description: selectedTodo.description ?? '',
+              }}
+              submitLabel={t('todos.form.updateButton')}
+            />
+          )}
         </BottomSheetKeyboardAwareScrollView>
       </Modal>
     </View>

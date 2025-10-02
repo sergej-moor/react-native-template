@@ -112,6 +112,7 @@
     "addTodo": "Add Todo",
     "clearCompleted": "Clear Completed",
     "completedCount": "{{count}} completed",
+    "editTodo": "Edit Todo",
     "filters": {
       "active": "Active",
       "all": "All",
