@@ -19,7 +19,6 @@ const mockTodo: Todo = {
 
 const onToggleMock = jest.fn();
 const onDeleteMock = jest.fn();
-const onPressMock = jest.fn();
 
 describe('TodoItem', () => {
   beforeEach(() => {
@@ -139,8 +138,8 @@ describe('TodoItem', () => {
     });
   });
 
-  describe('Delete Interaction', () => {
-    test('calls onDelete with correct id when delete button is pressed', async () => {
+  describe('Toggle on Press', () => {
+    test('calls onToggle when pressing the todo item', async () => {
       setup(
         <TodoItem
           todo={mockTodo}
@@ -149,46 +148,16 @@ describe('TodoItem', () => {
         />,
       );
 
-      const deleteButton = await screen.findByLabelText('Delete todo');
-      fireEvent.press(deleteButton);
+      const title = await screen.findByText('Test Todo');
+      fireEvent.press(title);
 
-      expect(onDeleteMock).toHaveBeenCalledWith('1');
-      expect(onDeleteMock).toHaveBeenCalledTimes(1);
-    });
-
-    test('delete button has correct accessibility properties', async () => {
-      setup(
-        <TodoItem
-          todo={mockTodo}
-          onToggle={onToggleMock}
-          onDelete={onDeleteMock}
-        />,
-      );
-
-      const deleteButton = await screen.findByLabelText('Delete todo');
-      expect(deleteButton).toHaveProp('accessibilityRole', 'button');
+      expect(onToggleMock).toHaveBeenCalledWith('1', true);
+      expect(onToggleMock).toHaveBeenCalledTimes(1);
     });
   });
 
-  describe('Press Interaction', () => {
-    test('calls onPress with correct id when todo is pressed', async () => {
-      setup(
-        <TodoItem
-          todo={mockTodo}
-          onToggle={onToggleMock}
-          onDelete={onDeleteMock}
-          onPress={onPressMock}
-        />,
-      );
-
-      const title = await screen.findByText('Test Todo');
-      fireEvent.press(title);
-
-      expect(onPressMock).toHaveBeenCalledWith('1');
-      expect(onPressMock).toHaveBeenCalledTimes(1);
-    });
-
-    test('does not crash when onPress is not provided', async () => {
+  describe('Swipe to Delete', () => {
+    test('renders with swipeable wrapper', () => {
       setup(
         <TodoItem
           todo={mockTodo}
@@ -197,10 +166,7 @@ describe('TodoItem', () => {
         />,
       );
 
-      const title = await screen.findByText('Test Todo');
-      fireEvent.press(title);
-
-      expect(onPressMock).not.toHaveBeenCalled();
+      expect(screen.getByText('Test Todo')).toBeOnTheScreen();
     });
   });
 

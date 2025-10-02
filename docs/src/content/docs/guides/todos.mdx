@@ -11,6 +11,7 @@ The todo app demonstrates:
 
 - **Local-First Architecture**: All data is stored locally using MMKV for instant performance
 - **Optimistic Updates**: Immediate UI feedback with automatic rollback on errors
+- **Modern UX**: Swipe-to-delete gestures, floating action button, and segmented filters
 - **Type Safety**: Full TypeScript coverage with strict types
 - **React Query Integration**: Efficient data fetching and cache management
 - **Database-Ready Design**: Types and structure prepared for future Supabase integration
@@ -29,15 +30,66 @@ src/
 │   ├── utils.ts          # Helper functions (filtering, sorting, validation)
 │   └── index.ts          # Public API exports
 │
-└── api/todos/
-    ├── use-todos.ts              # Query hook for fetching todos
-    ├── use-create-todo.ts        # Mutation hook for creating
-    ├── use-update-todo.ts        # Mutation hook for updating
-    ├── use-delete-todo.ts        # Mutation hook for deleting
-    ├── use-toggle-todo.ts        # Mutation hook for toggling completion
-    ├── use-clear-completed.ts    # Mutation hook for clearing completed
-    └── index.ts                  # Public API exports
+├── api/todos/
+│   ├── use-todos.ts              # Query hook for fetching todos
+│   ├── use-create-todo.ts        # Mutation hook for creating
+│   ├── use-update-todo.ts        # Mutation hook for updating
+│   ├── use-delete-todo.ts        # Mutation hook for deleting
+│   ├── use-toggle-todo.ts        # Mutation hook for toggling completion
+│   ├── use-clear-completed.ts    # Mutation hook for clearing completed
+│   └── index.ts                  # Public API exports
+│
+└── components/todos/
+    ├── todo-item.tsx         # Individual todo with swipe-to-delete
+    ├── todo-list.tsx         # FlashList implementation
+    ├── todo-form.tsx         # Add/edit form with validation
+    ├── todo-filters.tsx      # Segmented control filters
+    ├── todo-header.tsx       # Progress bar and clear button
+    └── empty-state.tsx       # Empty state views
 ```
+
+### UX Features
+
+The todo app implements modern mobile UX patterns:
+
+#### Swipe-to-Delete
+
+- **Gesture**: Swipe left on a todo item past the threshold and release to delete
+- **Implementation**: Uses `react-native-gesture-handler`'s `Swipeable` component
+- **Visual Feedback**: Red background with trash icon appears while swiping
+- **Auto-Delete**: Releasing the swipe automatically triggers deletion (like Spotify, iOS Mail)
+- **Smooth Animation**: Native-feeling gesture with proper physics
+
+```tsx
+<Swipeable
+  renderRightActions={() => (
+    <View className="bg-red-500">
+      <TrashIcon />
+    </View>
+  )}
+  onSwipeableOpen={handleDelete}
+>
+  <TodoItem />
+</Swipeable>
+```
+
+#### Tap-to-Toggle
+
+- **Gesture**: Tap anywhere on the todo item to toggle completion
+- **Visual Feedback**: Active state provides instant feedback
+- **Accessibility**: Full support for screen readers
+
+#### Floating Action Button (FAB)
+
+- **Position**: Fixed at bottom-right corner
+- **Action**: Opens a bottom sheet modal for adding todos
+- **Visual**: Clean, modern design with shadow
+
+#### Segmented Filters
+
+- **Style**: iOS-style segmented control
+- **Filters**: All / Active / Completed
+- **Visual**: Smooth transitions between states
 
 ## Type System
 
