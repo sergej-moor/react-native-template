@@ -15,45 +15,6 @@ type TodoItemProps = {
   onPress?: (id: string) => void;
 };
 
-const EditAction = () => (
-  <View className="mb-2 justify-center">
-    <View className="h-full items-center justify-center rounded-r-xl bg-blue-500 px-6 dark:bg-blue-600">
-      <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
-        <Path
-          d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
-          stroke="#ffffff"
-          strokeWidth={2}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <Path
-          d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
-          stroke="#ffffff"
-          strokeWidth={2}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </Svg>
-    </View>
-  </View>
-);
-
-const DeleteAction = () => (
-  <View className="mb-2 justify-center">
-    <View className="h-full items-center justify-center rounded-l-xl bg-red-500 px-6 dark:bg-red-600">
-      <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
-        <Path
-          d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
-          stroke="#ffffff"
-          strokeWidth={2}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </Svg>
-    </View>
-  </View>
-);
-
 export const TodoItem = React.memo(
   ({ todo, onToggle, onDelete, onEdit }: TodoItemProps) => {
     const swipeableRef = React.useRef<Swipeable>(null);
@@ -71,11 +32,56 @@ export const TodoItem = React.memo(
       onEdit?.(todo);
     }, [todo, onEdit]);
 
+    const renderLeftActions = React.useCallback(
+      () => (
+        <View className="mb-2 justify-center">
+          <View className="h-full items-center justify-center rounded-l-xl bg-blue-500 px-6 dark:bg-blue-600">
+            <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
+              <Path
+                d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
+                stroke="#ffffff"
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <Path
+                d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
+                stroke="#ffffff"
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </Svg>
+          </View>
+        </View>
+      ),
+      [],
+    );
+
+    const renderRightActions = React.useCallback(
+      () => (
+        <View className="mb-2 justify-center">
+          <View className="h-full items-center justify-center rounded-r-xl bg-red-500 px-6 dark:bg-red-600">
+            <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
+              <Path
+                d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+                stroke="#ffffff"
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </Svg>
+          </View>
+        </View>
+      ),
+      [],
+    );
+
     return (
       <Swipeable
         ref={swipeableRef}
-        renderLeftActions={onEdit ? () => <EditAction /> : undefined}
-        renderRightActions={() => <DeleteAction />}
+        renderLeftActions={onEdit ? renderLeftActions : undefined}
+        renderRightActions={renderRightActions}
         overshootLeft={false}
         overshootRight={false}
         leftThreshold={40}

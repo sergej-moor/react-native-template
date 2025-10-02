@@ -47,7 +47,6 @@ import { Pressable, View } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { Path, Svg } from 'react-native-svg';
 
-import colors from './colors';
 import { Text } from './text';
 
 type ModalProps = BottomSheetModalProps & {
@@ -83,7 +82,6 @@ export const Modal = forwardRef(
     ref: ModalRef,
   ) => {
     const { colorScheme } = useColorScheme();
-    const isDark = colorScheme === 'dark';
     const detachedProps = useMemo(() => getDetachedProps(detached), [detached]);
     const modal = useModal();
     const snapPoints = useMemo(() => _snapPoints, [_snapPoints]);
@@ -105,9 +103,9 @@ export const Modal = forwardRef(
 
     const backgroundStyle = useMemo(
       () => ({
-        backgroundColor: isDark ? colors.neutral[900] : colors.white,
+        backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff',
       }),
-      [isDark],
+      [colorScheme],
     );
 
     return (
