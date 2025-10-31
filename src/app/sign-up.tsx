@@ -1,4 +1,3 @@
-import { useRouter } from 'expo-router';
 import React from 'react';
 import { showMessage } from 'react-native-flash-message';
 
@@ -8,12 +7,7 @@ import { SignUpForm } from '@/components/sign-up-form';
 import { FocusAwareStatusBar } from '@/components/ui';
 
 export default function SignIn() {
-  const router = useRouter();
-
   const { mutate: signUp, isPending } = useSignUp({
-    onSuccess: () => {
-      router.push('/');
-    },
     onError: (error) => showMessage({ message: error.message, type: 'danger' }),
   });
 

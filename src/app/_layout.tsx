@@ -14,8 +14,8 @@ import { KeyboardProvider } from 'react-native-keyboard-controller';
 
 import { APIProvider } from '@/api';
 import interceptors from '@/api/common/interceptors';
-import { AuthProvider } from '@/components/providers/auth';
-import { hydrateAuth, loadSelectedTheme } from '@/lib';
+import { AuthProvider, useAuth } from '@/components/providers/auth';
+import { hydrateAuth, loadSelectedTheme, useIsFirstTime } from '@/lib';
 import { useThemeConfig } from '@/lib/use-theme-config';
 
 export { ErrorBoundary } from 'expo-router';
@@ -35,36 +35,65 @@ SplashScreen.setOptions({
   fade: true,
 });
 
-export default function RootLayout() {
+function GuardedStack() {
+  const { isAuthenticated } = useAuth();
   const { t } = useTranslation();
+  const [isFirstTime] = useIsFirstTime();
+
   return (
-    <Providers>
-      <Stack>
-        <Stack.Screen name="(app)" options={{ headerShown: false }} />
+    <Stack>
+      <Stack.Protected guard={isFirstTime}>
         <Stack.Screen name="onboarding" options={{ headerShown: false }} />
-        <Stack.Screen name="forgot-password" />
+      </Stack.Protected>
+
+      <Stack.Protected guard={isAuthenticated}>
+        <Stack.Screen name="(app)" options={{ headerShown: false }} />
         <Stack.Screen
           name="update-password"
           options={{
             title: t('updatePassword.title'),
           }}
         />
+      </Stack.Protected>
+
+      <Stack.Protected guard={!isAuthenticated}>
         <Stack.Screen name="sign-in" options={{ headerShown: false }} />
         <Stack.Screen name="sign-up" />
-        <Stack.Screen
-          name="www"
-          options={{
-            presentation: 'modal',
-            title: '', // Title will be overridden by the screen itself
-          }}
-        />
-      </Stack>
+        <Stack.Screen name="forgot-password" />
+      </Stack.Protected>
+
+      <Stack.Screen
+        name="www"
+        options={{
+          presentation: 'modal',
+          title: '',
+        }}
+      />
+    </Stack>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <Providers>
+      <RouterContent />
     </Providers>
   );
 }
 
-function Providers({ children }: { children: React.ReactNode }) {
+function RouterContent() {
+  const { ready } = useAuth();
+
+  if (!ready) {
+    return <Stack />;
+  }
+
+  return <GuardedStack />;
+}
+
+function Providers({ children }: Readonly<{ children: React.ReactNode }>) {
   const theme = useThemeConfig();
+
   return (
     <GestureHandlerRootView
       style={styles.container}

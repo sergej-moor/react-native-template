@@ -1,4 +1,3 @@
-import { useRouter } from 'expo-router';
 import React from 'react';
 import { showMessage } from 'react-native-flash-message';
 
@@ -7,12 +6,7 @@ import { LoginForm, type LoginFormProps } from '@/components/login-form';
 import { FocusAwareStatusBar } from '@/components/ui';
 
 export default function Login() {
-  const router = useRouter();
-
   const { mutate: login, isPending } = useLogin({
-    onSuccess: () => {
-      router.push('/');
-    },
     onError: (error) => showMessage({ message: error.message, type: 'danger' }),
   });
 
