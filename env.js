@@ -79,7 +79,7 @@ require('dotenv').config({
  * for example: if the APP_ENV is staging, the bundle id will be com.rootstrap.staging
  */
 
-// TODO: Replace these values with your own
+// TODO: Replace these values with your own values
 
 const BUNDLE_ID = 'com.rootstrap'; // ios bundle id
 const PACKAGE = 'com.rootstrap'; // android package name
