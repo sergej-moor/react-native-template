@@ -15,7 +15,7 @@ import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { APIProvider } from '@/api';
 import interceptors from '@/api/common/interceptors';
 import { AuthProvider, useAuth } from '@/components/providers/auth';
-import { hydrateAuth, loadSelectedTheme, useIsFirstTime } from '@/lib';
+import { loadSelectedTheme, useIsFirstTime } from '@/lib';
 import { useThemeConfig } from '@/lib/use-theme-config';
 
 export { ErrorBoundary } from 'expo-router';
@@ -24,7 +24,6 @@ export const unstable_settings = {
   initialRouteName: '(app)',
 };
 
-hydrateAuth();
 loadSelectedTheme();
 interceptors();
 // Prevent the splash screen from auto-hiding before asset loading is complete.
