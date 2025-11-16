@@ -143,6 +143,10 @@ export default defineConfig({
               link: '/guides/storage/',
             },
             {
+              label: 'CRUD Operations',
+              link: '/guides/crud-operations/',
+            },
+            {
               label: 'Upgrade Dependencies',
               link: '/guides/upgrading-deps/',
             },

@@ -1,5 +1,5 @@
 import { Link, Redirect, SplashScreen, Tabs } from 'expo-router';
-import { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 
 import { useAuth } from '@/components/providers/auth';
 import { Pressable, Text } from '@/components/ui';
@@ -7,6 +7,7 @@ import {
   Feed as FeedIcon,
   Settings as SettingsIcon,
   Style as StyleIcon,
+  Todos as NotesIcon,
   Todos as TodosIcon,
 } from '@/components/ui/icons';
 import { useIsFirstTime } from '@/lib';
@@ -47,6 +48,13 @@ export default function TabLayout() {
           title: 'Todos',
           tabBarIcon: ({ color }) => <TodosIcon color={color} />,
           tabBarButtonTestID: 'todos-tab',
+        }}
+      />
+      <Tabs.Screen
+        name="notes"
+        options={{
+          title: 'Notes',
+          tabBarIcon: ({ color }) => <NotesIcon color={color} />,
         }}
       />
       <Tabs.Screen
