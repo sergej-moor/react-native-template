@@ -52,7 +52,7 @@ export default defineConfig([
     rules: {
       'import/no-duplicates': 'error',
       'max-params': ['error', 3],
-      'max-lines-per-function': ['error', 70],
+      'max-lines-per-function': ['error', 100],
       'tailwindcss/classnames-order': [
         'warn',
         {

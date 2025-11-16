@@ -1,5 +1,3 @@
-/* eslint-disable max-lines-per-function */
-
 import type { OptionType } from '@/components/ui';
 import { cleanup, fireEvent, render, screen, setup } from '@/lib/test-utils';
 

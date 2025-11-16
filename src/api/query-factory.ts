@@ -24,4 +24,14 @@ const productsKeys = createQueryKeys('products', {
   detail: (id) => [id],
 });
 
-export const queryFactory = mergeQueryKeys(postKeys, productsKeys);
+export const todoKeys = createQueryKeys('todos', {
+  all: null,
+  lists: () => ({
+    queryKey: ['list'],
+  }),
+  detail: (id: string) => ({
+    queryKey: [id],
+  }),
+});
+
+export const queryFactory = mergeQueryKeys(postKeys, productsKeys, todoKeys);

@@ -1,4 +1,3 @@
-/* eslint-disable max-lines-per-function */
 import { Text } from 'react-native';
 
 import { cleanup, render, screen, setup } from '@/lib/test-utils';
