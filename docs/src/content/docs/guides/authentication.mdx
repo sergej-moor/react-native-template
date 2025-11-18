@@ -67,3 +67,33 @@ A common use case is to protect certain parts of your application based on the u
 The root layout file, `src/app/_layout.tsx`, is a great example of how to implement route protection. It checks the authentication `status` from the store and renders the appropriate navigator—either the main app navigator for authenticated users or the sign-in navigator for unauthenticated users.
 
 <CodeBlock file="src/app/_layout.tsx" />
+
+## Deleting a User Account
+
+To allow users to delete their own accounts, you need to create a custom RPC (Remote Procedure Call) function in your Supabase database. This is necessary because Supabase's `auth.users` table has row-level security (RLS) enabled, which prevents direct deletion of user records from the client-side for security reasons.
+
+The `useDeleteUser` hook, located at `src/api/auth/use-delete-user.ts`, calls a Supabase RPC function named `delete_user` to perform this action.
+
+You can add this function by navigating to the **SQL Editor** in your Supabase project dashboard and running the following SQL queries.
+
+### 1. Create the `delete_user` function:
+This function deletes the user record corresponding to the currently authenticated user who calls it. The `security definer` option allows the function to run with the permissions of the user who defined it, bypassing RLS.
+
+```sql
+create or replace function public.delete_user()
+returns void
+language sql
+security definer
+as $$
+  delete from auth.users where id = auth.uid();
+$$;
+```
+
+### 2. Grant execution permission:
+After creating the function, you need to grant permission for authenticated users to execute it.
+
+```sql
+grant execute on function public.delete_user() to authenticated;
+```
+
+With this function in place, the `useDeleteUser` mutation will work as expected, allowing users to securely delete their accounts.
