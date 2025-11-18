@@ -1,7 +1,6 @@
 import { Link, Redirect, SplashScreen, Tabs } from 'expo-router';
 import React, { useCallback, useEffect } from 'react';
 
-import { useAuth } from '@/components/providers/auth';
 import { Pressable, Text } from '@/components/ui';
 import {
   Feed as FeedIcon,
@@ -10,26 +9,29 @@ import {
   Todos as NotesIcon,
   Todos as TodosIcon,
 } from '@/components/ui/icons';
-import { useIsFirstTime } from '@/lib';
+import { useAuth, useIsFirstTime } from '@/lib';
 
 export default function TabLayout() {
-  const { isAuthenticated, ready } = useAuth();
+  const status = useAuth.use.status();
   const [isFirstTime] = useIsFirstTime();
   const hideSplash = useCallback(async () => {
     await SplashScreen.hideAsync();
   }, []);
 
   useEffect(() => {
-    if (!ready) {
+    if (status !== 'idle') {
       hideSplash();
     }
-  }, [hideSplash, ready]);
+  }, [hideSplash, status]);
 
   if (isFirstTime) {
     return <Redirect href="/onboarding" />;
   }
-  if (!isAuthenticated && ready) {
+  if (status === 'signOut') {
     return <Redirect href="/sign-in" />;
+  }
+  if (status === 'idle') {
+    return null;
   }
   return (
     <Tabs>

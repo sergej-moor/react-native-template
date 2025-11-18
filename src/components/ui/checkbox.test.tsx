@@ -114,7 +114,7 @@ describe('Checkbox component', () => {
   });
 });
 
-describe('Radio component ', () => {
+describe('Radio component', () => {
   const RADIO_LABEL = 'radio-label';
 
   it('<Radio /> renders correctly and call on change on Press', async () => {
@@ -181,7 +181,7 @@ describe('Radio component ', () => {
   });
 });
 
-describe('Switch component ', () => {
+describe('Switch component', () => {
   const SWITCH_LABEL = 'switch-label';
 
   it('<Switch /> renders correctly and call on change on Press', async () => {

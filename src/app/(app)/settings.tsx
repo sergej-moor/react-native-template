@@ -4,8 +4,7 @@ import { useColorScheme } from 'nativewind';
 import React from 'react';
 import { showMessage } from 'react-native-flash-message';
 
-import { useDeleteUser, useUser } from '@/api/auth/use-user';
-import { useAuth } from '@/components/providers/auth';
+import { useDeleteUser } from '@/api/auth/use-delete-user';
 import { DeleteAccountItem } from '@/components/settings/delete-account-item';
 import { Item } from '@/components/settings/item';
 import { ItemsContainer } from '@/components/settings/items-container';
@@ -19,12 +18,11 @@ import {
   View,
 } from '@/components/ui';
 import { Website } from '@/components/ui/icons';
-import { translate } from '@/lib';
+import { signOut, translate, useAuth } from '@/lib';
 import { Env } from '@/lib/env';
 
 export default function Settings() {
-  const { logout } = useAuth();
-  const { data: userData } = useUser();
+  const user = useAuth.use.user();
   const { mutateAsync: deleteUserAsync, isPending: isDeletingUser } =
     useDeleteUser({
       onSuccess: () => {
@@ -32,9 +30,9 @@ export default function Settings() {
           message: 'Account deleted successfully',
           type: 'success',
         });
-        logout();
+        signOut();
       },
-      onError: (error) =>
+      onError: (error: Error) =>
         showMessage({ message: error.message, type: 'danger' }),
     });
   const { colorScheme } = useColorScheme();
@@ -42,10 +40,10 @@ export default function Settings() {
     colorScheme === 'dark' ? colors.neutral[400] : colors.neutral[500];
 
   const handleDeleteUser = async () => {
-    if (!userData?.email) {
+    if (!user?.email) {
       return;
     }
-    await deleteUserAsync({ email: userData?.email });
+    await deleteUserAsync({ email: user?.email });
   };
 
   return (
@@ -57,11 +55,11 @@ export default function Settings() {
             {translate('settings.title')}
           </Text>
           <ItemsContainer title="settings.account.title">
-            <Item text={'settings.account.name'} value={userData?.name ?? ''} />
             <Item
-              text={'settings.account.email'}
-              value={userData?.email ?? ''}
+              text={'settings.account.name'}
+              value={user?.user_metadata?.name ?? ''}
             />
+            <Item text={'settings.account.email'} value={user?.email ?? ''} />
             <Link
               asChild
               href={{
@@ -114,10 +112,10 @@ export default function Settings() {
             <ItemsContainer>
               <DeleteAccountItem
                 onDelete={handleDeleteUser}
-                userEmail={userData?.email}
+                userEmail={user?.email}
                 isDeleting={isDeletingUser}
               />
-              <Item text="settings.logout" onPress={logout} />
+              <Item text="settings.logout" onPress={signOut} />
             </ItemsContainer>
           </View>
         </View>

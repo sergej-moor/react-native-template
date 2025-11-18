@@ -7,9 +7,9 @@ import { Input } from './input';
 
 afterEach(cleanup);
 
-describe('Input component ', () => {
+describe('Input component', () => {
   const INPUT_ERROR = 'input-error';
-  it('renders correctly ', () => {
+  it('renders correctly', () => {
     render(<Input testID="input" />);
     expect(screen.getByTestId('input')).toBeOnTheScreen();
   });
@@ -29,7 +29,7 @@ describe('Input component ', () => {
     });
   });
 
-  it('should render the placeholder correctly ', () => {
+  it('should render the placeholder correctly', () => {
     render(<Input testID="input" placeholder="Enter your username" />);
     expect(screen.getByTestId('input')).toBeOnTheScreen();
     expect(
@@ -37,14 +37,14 @@ describe('Input component ', () => {
     ).toBeOnTheScreen();
   });
 
-  it('should render the label correctly ', () => {
+  it('should render the label correctly', () => {
     render(<Input testID="input" label="Username" />);
     expect(screen.getByTestId('input')).toBeOnTheScreen();
 
     expect(screen.getByTestId('input-label')).toHaveTextContent('Username');
   });
 
-  it('should render the error message correctly ', () => {
+  it('should render the error message correctly', () => {
     render(<Input testID="input" error="This is an error message" />);
     expect(screen.getByTestId('input')).toBeOnTheScreen();
 
@@ -52,7 +52,7 @@ describe('Input component ', () => {
       'This is an error message',
     );
   });
-  it('should render the label, error message & placeholder correctly ', () => {
+  it('should render the label, error message & placeholder correctly', () => {
     render(
       <Input
         testID="input"
@@ -73,7 +73,7 @@ describe('Input component ', () => {
     ).toBeOnTheScreen();
   });
 
-  it('should trigger onFocus event correctly ', async () => {
+  it('should trigger onFocus event correctly', async () => {
     const onFocus = jest.fn();
     const { user } = setup(<Input testID="input" onFocus={onFocus} />);
 
@@ -82,7 +82,7 @@ describe('Input component ', () => {
     expect(onFocus).toHaveBeenCalledTimes(1);
   });
 
-  it('should trigger onBlur event correctly ', async () => {
+  it('should trigger onBlur event correctly', async () => {
     const onBlur = jest.fn();
     const { user } = setup(<Input testID="input" onBlur={onBlur} />);
 

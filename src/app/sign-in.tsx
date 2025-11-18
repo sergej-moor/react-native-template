@@ -47,7 +47,6 @@ export default function Login() {
       // Check if error is related to email confirmation
       if (
         errorMessage.includes('email not confirmed') ||
-        errorMessage.includes('confirm your email') ||
         errorMessage.includes('email_not_confirmed')
       ) {
         Alert.alert(
@@ -57,7 +56,11 @@ export default function Login() {
             { text: 'OK', style: 'default' },
             {
               text: 'Resend Email',
-              onPress: () => handleResendConfirmation(variables.email),
+              onPress: () => {
+                if (variables.email) {
+                  handleResendConfirmation(variables.email);
+                }
+              },
             },
           ],
         );

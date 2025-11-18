@@ -6,12 +6,12 @@ import { Button } from './button';
 
 afterEach(cleanup);
 
-describe('Button component ', () => {
-  it('should render correctly ', () => {
+describe('Button component', () => {
+  it('should render correctly', () => {
     render(<Button testID="button" />);
     expect(screen.getByTestId('button')).toBeOnTheScreen();
   });
-  it('should render correctly if we add explicit child ', () => {
+  it('should render correctly if we add explicit child', () => {
     render(
       <Button testID="button">
         <Text> Custom child </Text>

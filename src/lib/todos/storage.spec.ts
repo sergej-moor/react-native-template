@@ -1,5 +1,5 @@
 /* eslint-disable max-lines-per-function */
-/* eslint-disable @typescript-eslint/no-magic-numbers */
+
 import { getItem, setItem } from '@/lib/storage';
 
 import {
@@ -14,6 +14,10 @@ import {
   updateTodo,
 } from './storage';
 import type { Todo } from './types';
+
+const NON_DELETED_TODOS_COUNT = 2;
+const MOCK_TODOS_COUNT_WITH_NEW = 4;
+const MOCK_TODOS_COUNT = 3;
 
 // Mock the storage module
 jest.mock('@/lib/storage', () => ({
@@ -68,7 +72,7 @@ describe('Todo Storage', () => {
 
       const result = getTodos();
 
-      expect(result).toHaveLength(2);
+      expect(result).toHaveLength(NON_DELETED_TODOS_COUNT);
       expect(result).toEqual([mockTodos[0], mockTodos[1]]);
       expect(mockGetItem).toHaveBeenCalledWith('todos');
     });
@@ -231,7 +235,7 @@ describe('Todo Storage', () => {
       await addTodo(newTodo);
 
       const savedTodos = mockSetItem.mock.calls[0][1] as Array<Todo>;
-      expect(savedTodos).toHaveLength(4);
+      expect(savedTodos).toHaveLength(MOCK_TODOS_COUNT_WITH_NEW);
       expect(savedTodos.find((t) => t.deletedAt)).toBeDefined();
     });
 
@@ -453,7 +457,7 @@ describe('Todo Storage', () => {
       await permanentlyDeleteTodo('1');
 
       const savedTodos = mockSetItem.mock.calls[0][1] as Array<Todo>;
-      expect(savedTodos).toHaveLength(2);
+      expect(savedTodos).toHaveLength(NON_DELETED_TODOS_COUNT);
       expect(savedTodos.find((t) => t.id === '1')).toBeUndefined();
     });
 
@@ -464,7 +468,7 @@ describe('Todo Storage', () => {
       await permanentlyDeleteTodo('3');
 
       const savedTodos = mockSetItem.mock.calls[0][1] as Array<Todo>;
-      expect(savedTodos).toHaveLength(2);
+      expect(savedTodos).toHaveLength(NON_DELETED_TODOS_COUNT);
     });
 
     test('handles non-existent todo gracefully', async () => {
@@ -474,7 +478,7 @@ describe('Todo Storage', () => {
       await permanentlyDeleteTodo('999');
 
       const savedTodos = mockSetItem.mock.calls[0][1] as Array<Todo>;
-      expect(savedTodos).toHaveLength(3);
+      expect(savedTodos).toHaveLength(MOCK_TODOS_COUNT);
     });
 
     test('throws error when delete fails', async () => {

@@ -4,7 +4,7 @@ import { LoginForm } from './login-form';
 
 afterEach(cleanup);
 
-describe('LoginForm Form ', () => {
+describe('LoginForm Form', () => {
   const LOGIN_BUTTON = 'login-button';
   it('renders correctly', async () => {
     render(<LoginForm />);

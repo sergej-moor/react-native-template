@@ -1,5 +1,5 @@
 /* eslint-disable max-lines-per-function */
-/* eslint-disable @typescript-eslint/no-magic-numbers */
+
 import type { Todo } from './types';
 import {
   filterTodos,
@@ -9,6 +9,15 @@ import {
   validateTodoDescription,
   validateTodoTitle,
 } from './utils';
+
+const MOCK_TODOS_COUNT = 4;
+const ACTIVE_TODOS_COUNT = 2;
+const COMPLETED_TODOS_COUNT = 2;
+const TITLE_MAX_LENGTH = 200;
+const TITLE_MAX_LENGTH_EXCEEDED = 201;
+const DESC_MAX_LENGTH = 1000;
+const DESC_MAX_LENGTH_EXCEEDED = 1001;
+const UNIQUE_ID_COUNT = 100;
 
 describe('Todo Utils', () => {
   const mockTodos: Array<Todo> = [
@@ -48,14 +57,14 @@ describe('Todo Utils', () => {
     test('returns all todos when filter is "all"', () => {
       const result = filterTodos(mockTodos, 'all');
 
-      expect(result).toHaveLength(4);
+      expect(result).toHaveLength(MOCK_TODOS_COUNT);
       expect(result).toEqual(mockTodos);
     });
 
     test('returns only active todos when filter is "active"', () => {
       const result = filterTodos(mockTodos, 'active');
 
-      expect(result).toHaveLength(2);
+      expect(result).toHaveLength(ACTIVE_TODOS_COUNT);
       expect(result.every((todo) => !todo.completed)).toBe(true);
       expect(result.map((t) => t.id)).toEqual(['1', '3']);
     });
@@ -63,7 +72,7 @@ describe('Todo Utils', () => {
     test('returns only completed todos when filter is "completed"', () => {
       const result = filterTodos(mockTodos, 'completed');
 
-      expect(result).toHaveLength(2);
+      expect(result).toHaveLength(COMPLETED_TODOS_COUNT);
       expect(result.every((todo) => todo.completed)).toBe(true);
       expect(result.map((t) => t.id)).toEqual(['2', '4']);
     });
@@ -213,7 +222,7 @@ describe('Todo Utils', () => {
     });
 
     test('returns error when title exceeds 200 characters', () => {
-      const longTitle = 'a'.repeat(201);
+      const longTitle = 'a'.repeat(TITLE_MAX_LENGTH_EXCEEDED);
       const result = validateTodoTitle(longTitle);
 
       expect(result.valid).toBe(false);
@@ -221,7 +230,7 @@ describe('Todo Utils', () => {
     });
 
     test('accepts title with exactly 200 characters', () => {
-      const maxTitle = 'a'.repeat(200);
+      const maxTitle = 'a'.repeat(TITLE_MAX_LENGTH);
       const result = validateTodoTitle(maxTitle);
 
       expect(result.valid).toBe(true);
@@ -261,7 +270,7 @@ describe('Todo Utils', () => {
     });
 
     test('returns error when description exceeds 1000 characters', () => {
-      const longDesc = 'a'.repeat(1001);
+      const longDesc = 'a'.repeat(DESC_MAX_LENGTH_EXCEEDED);
       const result = validateTodoDescription(longDesc);
 
       expect(result.valid).toBe(false);
@@ -269,7 +278,7 @@ describe('Todo Utils', () => {
     });
 
     test('accepts description with exactly 1000 characters', () => {
-      const maxDesc = 'a'.repeat(1000);
+      const maxDesc = 'a'.repeat(DESC_MAX_LENGTH);
       const result = validateTodoDescription(maxDesc);
 
       expect(result.valid).toBe(true);
@@ -315,11 +324,11 @@ describe('Todo Utils', () => {
 
     test('generates multiple unique ids in succession', () => {
       const ids = new Set();
-      for (let i = 0; i < 100; i++) {
+      for (let i = 0; i < UNIQUE_ID_COUNT; i++) {
         ids.add(generateTodoId());
       }
 
-      expect(ids.size).toBe(100);
+      expect(ids.size).toBe(UNIQUE_ID_COUNT);
     });
 
     test('generates id as a string', () => {

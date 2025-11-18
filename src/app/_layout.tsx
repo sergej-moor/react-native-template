@@ -14,8 +14,7 @@ import { KeyboardProvider } from 'react-native-keyboard-controller';
 
 import { APIProvider } from '@/api';
 import interceptors from '@/api/common/interceptors';
-import { AuthProvider, useAuth } from '@/components/providers/auth';
-import { hydrateAuth, loadSelectedTheme, useIsFirstTime } from '@/lib';
+import { hydrateAuth, loadSelectedTheme, useAuth, useIsFirstTime } from '@/lib';
 import { useThemeConfig } from '@/lib/use-theme-config';
 
 export { ErrorBoundary } from 'expo-router';
@@ -36,15 +35,26 @@ SplashScreen.setOptions({
 });
 
 function GuardedStack() {
-  const { isAuthenticated } = useAuth();
+  const status = useAuth.use.status();
   const { t } = useTranslation();
   const [isFirstTime] = useIsFirstTime();
 
+  const isAuthenticated = status === 'signIn';
+
   return (
     <Stack>
-      <Stack.Protected guard={isFirstTime}>
-        <Stack.Screen name="onboarding" options={{ headerShown: false }} />
-      </Stack.Protected>
+      <Stack.Screen
+        name="onboarding"
+        options={{
+          headerShown: false,
+          // eslint-disable-next-line no-nested-ternary
+          statusBarStyle: isFirstTime
+            ? 'dark'
+            : isAuthenticated
+              ? 'dark'
+              : 'light',
+        }}
+      />
 
       <Stack.Protected guard={isAuthenticated}>
         <Stack.Screen name="(app)" options={{ headerShown: false }} />
@@ -58,8 +68,18 @@ function GuardedStack() {
 
       <Stack.Protected guard={!isAuthenticated}>
         <Stack.Screen name="sign-in" options={{ headerShown: false }} />
-        <Stack.Screen name="sign-up" />
-        <Stack.Screen name="forgot-password" />
+        <Stack.Screen
+          name="sign-up"
+          options={{
+            title: t('signUp.title'),
+          }}
+        />
+        <Stack.Screen
+          name="forgot-password"
+          options={{
+            title: t('forgotPassword.title'),
+          }}
+        />
       </Stack.Protected>
 
       <Stack.Screen
@@ -82,10 +102,16 @@ export default function RootLayout() {
 }
 
 function RouterContent() {
-  const { ready } = useAuth();
+  const status = useAuth.use.status();
 
-  if (!ready) {
-    return <Stack />;
+  React.useEffect(() => {
+    if (status !== 'idle') {
+      SplashScreen.hideAsync();
+    }
+  }, [status]);
+
+  if (status === 'idle') {
+    return null;
   }
 
   return <GuardedStack />;
@@ -102,12 +128,10 @@ function Providers({ children }: Readonly<{ children: React.ReactNode }>) {
       <KeyboardProvider>
         <ThemeProvider value={theme}>
           <APIProvider>
-            <AuthProvider>
-              <BottomSheetModalProvider>
-                {children}
-                <FlashMessage position="top" />
-              </BottomSheetModalProvider>
-            </AuthProvider>
+            <BottomSheetModalProvider>
+              {children}
+              <FlashMessage position="top" />
+            </BottomSheetModalProvider>
           </APIProvider>
         </ThemeProvider>
       </KeyboardProvider>

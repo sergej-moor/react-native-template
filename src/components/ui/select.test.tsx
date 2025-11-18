@@ -5,7 +5,7 @@ import { Select } from './select';
 
 afterEach(cleanup);
 
-describe('Select component ', () => {
+describe('Select component', () => {
   const SELECT_TRIGGER = 'select-trigger';
   const SELECT_LABEL = 'select-label';
   const SELECT_ERROR = 'select-error';
@@ -14,7 +14,7 @@ describe('Select component ', () => {
     { value: 'strawberry', label: 'Strawberry' },
     { value: 'vanilla', label: 'Vanilla' },
   ];
-  it('should render correctly ', () => {
+  it('should render correctly', () => {
     const onSelect = jest.fn();
     render(
       <Select
@@ -28,7 +28,7 @@ describe('Select component ', () => {
     expect(screen.getByTestId(SELECT_LABEL)).toBeOnTheScreen();
   });
 
-  it('should render the label correctly ', () => {
+  it('should render the label correctly', () => {
     const onSelect = jest.fn();
     render(
       <Select
@@ -43,7 +43,7 @@ describe('Select component ', () => {
     expect(screen.getByTestId(SELECT_LABEL)).toHaveTextContent('Select');
   });
 
-  it('should render the error correctly ', () => {
+  it('should render the error correctly', () => {
     const onSelect = jest.fn();
     render(
       <Select

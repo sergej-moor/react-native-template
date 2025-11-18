@@ -1,10 +1,13 @@
 /* eslint-disable max-lines-per-function */
-/* eslint-disable @typescript-eslint/no-magic-numbers */
+
 import React from 'react';
 
 import { cleanup, fireEvent, screen, setup, waitFor } from '@/lib/test-utils';
 
 import { TodoForm } from './todo-form';
+
+const TITLE_MAX_LENGTH_EXCEEDED = 201;
+const DESC_MAX_LENGTH_EXCEEDED = 1001;
 
 afterEach(cleanup);
 
@@ -76,7 +79,7 @@ describe('TodoForm', () => {
     test('displays max length error when title exceeds 200 characters', async () => {
       setup(<TodoForm onSubmit={onSubmitMock} />);
       const titleInput = screen.getByTestId('todo-title-input');
-      const longTitle = 'a'.repeat(201);
+      const longTitle = 'a'.repeat(TITLE_MAX_LENGTH_EXCEEDED);
 
       fireEvent.changeText(titleInput, longTitle);
       fireEvent.press(screen.getByTestId('todo-submit-button'));
@@ -91,7 +94,7 @@ describe('TodoForm', () => {
       setup(<TodoForm onSubmit={onSubmitMock} />);
       const titleInput = screen.getByTestId('todo-title-input');
       const descInput = screen.getByTestId('todo-description-input');
-      const longDesc = 'a'.repeat(1001);
+      const longDesc = 'a'.repeat(DESC_MAX_LENGTH_EXCEEDED);
 
       fireEvent.changeText(titleInput, 'Valid Title');
       fireEvent.changeText(descInput, longDesc);

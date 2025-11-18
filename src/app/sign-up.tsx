@@ -11,20 +11,13 @@ export default function SignUp() {
   const router = useRouter();
 
   const { mutate: signUp, isPending } = useSignUp({
-    onSuccess: (response) => {
-      if (response.needsEmailConfirmation) {
-        // Show message about email confirmation
-        showMessage({
-          message: `Please check your email (${response.user.email}) and click the confirmation link to activate your account.`,
-          type: 'info',
-          duration: 8000, // Show for 8 seconds
-        });
-        // Redirect to sign-in page where they can try to log in after confirmation
-        router.push('/sign-in');
-      } else {
-        // Email confirmation not required, go to app
-        router.push('/');
-      }
+    onSuccess: () => {
+      showMessage({
+        message: `Please check your email and click the confirmation link to activate your account.`,
+        type: 'success',
+      });
+      // Redirect to sign-in page where they can try to log in after confirmation
+      router.push('/sign-in');
     },
     onError: (error) => showMessage({ message: error.message, type: 'danger' }),
   });

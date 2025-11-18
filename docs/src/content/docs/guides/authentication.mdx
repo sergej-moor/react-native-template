@@ -8,64 +8,62 @@ head:
 
 import CodeBlock from '../../../components/code.astro';
 
-Most of the applications we had the chance to work on required some sort of authentication and having a bad approach to do it can lead to a lot of problems. The starter kit comes with the basics and mostly what you need to start with authentication in your application.
+Most applications require some form of authentication, and a poorly designed approach can lead to significant issues. This starter kit provides a solid foundation for implementing authentication in your application using Supabase.
 
-As Authentication is global to the application, we end up using Zustand to manage the authentication state of the application.
-
-[Zustand](https://github.com/pmndrs/zustand) is a state management library that is very simple to use and highly performant. It is also easy to integrate with React and works better than a simple context API, as it offers additional features such as selectors to prevent unnecessary re-renders.
-
-Zustand works very well with TypeScript and can be easily used outside the React tree, which means more flexibility.
+We use [Zustand](https://github.com/pmndrs/zustand) to globally manage the application's authentication state. Zustand is a simple, high-performance state management library that integrates seamlessly with React. It offers advantages over the standard Context API, such as selectors to prevent unnecessary re-renders and the flexibility to be used outside of the React component tree.
 
 ## Authentication Store
 
-As mentioned earlier, we use Zustand to manage the authentication state of the application. The authentication store is located in `src/store/auth` and is utilized for managing the authentication state of the application.
+The authentication store, located at `src/lib/auth/index.tsx`, is the central hub for managing the app's authentication state.
 
 <CodeBlock file="src/lib/auth/index.tsx" />
 
-The store is composed of 2 states and 3 actions:
+The store is composed of the following states and actions:
 
-- `status`: The status of the authentication. It can be `idle`, `signOut` or `signIn`.
+-   **States**:
+    -   `session`: The user's session object from Supabase.
+    -   `user`: The user object from Supabase.
+    -   `status`: The authentication status, which can be:
+        -   `idle`: The initial state before authentication status has been determined.
+        -   `signIn`: The user is authenticated.
+        -   `signOut`: The user is not authenticated.
 
-  - `idle`: Still not sure if the user is authenticated or not (when we are fetching tokens from the storage)
-  - `signOut`: The user is not authenticated
-  - `signIn`: The user is authenticated
+-   **Actions**:
+    -   `signIn`: A function to sign in the user. It takes the `session` and `user` objects, persists them to storage, and updates the state.
+    -   `signOut`: An action to sign out the user. It clears the session from Supabase, removes the data from storage, and updates the state.
+    -   `hydrate`: An action that runs on app startup to check for a persisted session in storage. It updates the state to `signIn` if a valid session is found, or `signOut` otherwise.
 
-- `useToken`: The token of the user. It is used to authenticate the user to the API. It is stored in the storage of the device and we use it to hydrate the authentication status state when the application is started.
+The store also automatically listens to Supabase's `onAuthStateChange` event, allowing it to respond to authentication changes in real-time from any part of the application, such as token refreshes or user updates.
 
-  For the Demo app `useToken` is a simple object that contains the `accessToken` and the `refreshToken`. You can add more fields if you update the `TokenType` type in `src/lib/auth/utils.ts`.
+## Using the Authentication Store
 
-- `signIn`: The function performs user sign-in. It accepts a token as a parameter, sets the token state, stores it locally, and updates the status to `signIn`.
-
-- `signOut`: The action to sign out the user. It sets the token state to `null` and removes it from the storage as well as setting the status to `signOut`.
-
-- `hydrate`: The action to hydrate the authentication status state. We call this action when the application is started to check if the user is authenticated or not. It fetches the token from the storage and sets the status to `signIn` if the token is not `null` or `signOut` if the token is `null`.
-
-## Use Authentication store
-
-You guessed it, you only need to import the store from `@/lib` and use it in your component or even call store actions from outside React.
+To use the store, import it from `@/lib`. You can then access the state or call actions from any component or even from outside the React tree.
 
 ```tsx
-import { useAuth, hydrate } from '@/lib';
+import { useAuth, hydrateAuth } from '@/lib';
 
-hydrate(); // call this when the application is started to check if the user is authenticated or not
+// Call this on app startup to restore the session
+hydrateAuth();
 
-const App = () => {
+const MyComponent = () => {
   const status = useAuth.use.status();
+  const user = useAuth.use.user();
   const signOut = useAuth.use.signOut();
 
   return (
     <View>
-      <Text>{status}</Text>
+      <Text>Status: {status}</Text>
+      {user && <Text>Welcome, {user.email}</Text>}
       <Button title="Sign Out" onPress={signOut} />
     </View>
   );
 };
 ```
 
-## Use Case
+## Guarding Routes
 
-Let's imagine we have a simple application that has a login navigator and a home navigator. The home navigator is only accessible if the user is authenticated, while the login navigator is accessible if the user is not authenticated.
+A common use case is to protect certain parts of your application based on the user's authentication status. With our setup, you can easily guard your routes.
 
-In this case, you only need to retrieve the status from the authentication store and display the appropriate navigation based on the status.
+The root layout file, `src/app/_layout.tsx`, is a great example of how to implement route protection. It checks the authentication `status` from the store and renders the appropriate navigator—either the main app navigator for authenticated users or the sign-in navigator for unauthenticated users.
 
-<CodeBlock file="src/app/(app)/_layout.tsx" />
+<CodeBlock file="src/app/_layout.tsx" />
