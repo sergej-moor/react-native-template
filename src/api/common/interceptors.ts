@@ -10,6 +10,8 @@ const API_KEY_HEADER = 'apikey';
 
 export default function interceptors() {
   client.interceptors.request.use((config: InternalAxiosRequestConfig) => {
+    // Now this reads from the reactive Zustand store which is kept in sync
+    // by the Supabase listener. This is safe and correct.
     const session = useAuth.getState().session;
 
     if (session) {

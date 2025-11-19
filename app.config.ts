@@ -78,6 +78,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     'expo-dev-client',
     'expo-localization',
     'expo-router',
+    'expo-secure-store',
     ['app-icon-badge', appIconBadgeConfig],
     ['react-native-edge-to-edge'],
   ],

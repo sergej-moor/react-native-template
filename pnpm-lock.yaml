@@ -67,7 +67,10 @@ importers:
         version: 16.1.6(expo@53.0.23(@babel/core@7.28.4)(@expo/metro-runtime@5.0.5(react-native@0.79.5(@babel/core@7.28.4)(@types/react@19.0.14)(react@19.0.0)))(react-native-webview@13.13.5(react-native@0.79.5(@babel/core@7.28.4)(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native@0.79.5(@babel/core@7.28.4)(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react@19.0.0)
       expo-router:
         specifier: ~5.1.7
-        version: 5.1.7(05fdc8f0b9d7d2c39ebc900641e0a64f)
+        version: 5.1.7(elhqv4oebug2twzkdgd75kxfry)
+      expo-secure-store:
+        specifier: ~14.2.4
+        version: 14.2.4(expo@53.0.23(@babel/core@7.28.4)(@expo/metro-runtime@5.0.5(react-native@0.79.5(@babel/core@7.28.4)(@types/react@19.0.14)(react@19.0.0)))(react-native-webview@13.13.5(react-native@0.79.5(@babel/core@7.28.4)(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native@0.79.5(@babel/core@7.28.4)(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))
       expo-splash-screen:
         specifier: ~0.30.10
         version: 0.30.10(expo@53.0.23(@babel/core@7.28.4)(@expo/metro-runtime@5.0.5(react-native@0.79.5(@babel/core@7.28.4)(@types/react@19.0.14)(react@19.0.0)))(react-native-webview@13.13.5(react-native@0.79.5(@babel/core@7.28.4)(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native@0.79.5(@babel/core@7.28.4)(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))
@@ -3523,6 +3526,11 @@ packages:
       react-native-reanimated:
         optional: true
 
+  expo-secure-store@14.2.4:
+    resolution: {integrity: sha512-ePaz4fnTitJJZjAiybaVYGfLWWyaEtepZC+vs9ZBMhQMfG5HUotIcVsDaSo3FnwpHmgwsLVPY2qFeryI6AtULw==}
+    peerDependencies:
+      expo: '*'
+
   expo-splash-screen@0.30.10:
     resolution: {integrity: sha512-Tt9va/sLENQDQYeOQ6cdLdGvTZ644KR3YG9aRlnpcs2/beYjOX1LHT510EGzVN9ljUTg+1ebEo5GGt2arYtPjw==}
     peerDependencies:
@@ -5440,6 +5448,7 @@ packages:
   phin@3.7.1:
     resolution: {integrity: sha512-GEazpTWwTZaEQ9RhL7Nyz0WwqilbqgLahDM3D0hxWwmVDI52nXEybHqiN6/elwpkJBhcuj+WbBu+QfT0uhPGfQ==}
     engines: {node: '>= 8'}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   picocolors@1.1.1:
     resolution: {integrity: sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA==}
@@ -10780,13 +10789,13 @@ snapshots:
       debug: 4.4.3
       enhanced-resolve: 5.17.1
       eslint: 9.35.0(jiti@1.21.6)
-      eslint-module-utils: 2.12.0(@typescript-eslint/parser@8.44.0(eslint@9.35.0(jiti@1.21.6))(typescript@5.8.3))(eslint-import-resolver-typescript@3.6.3)(eslint@9.35.0(jiti@1.21.6))
+      eslint-module-utils: 2.12.0(@typescript-eslint/parser@8.44.0(eslint@9.35.0(jiti@1.21.6))(typescript@5.8.3))(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@8.44.0(eslint@9.35.0(jiti@1.21.6))(typescript@5.8.3))(eslint-plugin-import@2.31.0)(eslint@9.35.0(jiti@1.21.6)))(eslint@9.35.0(jiti@1.21.6))
       fast-glob: 3.3.2
       get-tsconfig: 4.8.1
       is-bun-module: 1.2.1
       is-glob: 4.0.3
     optionalDependencies:
-      eslint-plugin-import: 2.31.0(@typescript-eslint/parser@8.44.0(eslint@9.35.0(jiti@1.21.6))(typescript@5.8.3))(eslint-import-resolver-typescript@4.4.4)(eslint@9.35.0(jiti@1.21.6))
+      eslint-plugin-import: 2.31.0(@typescript-eslint/parser@8.44.0(eslint@9.35.0(jiti@1.21.6))(typescript@5.8.3))(eslint-import-resolver-typescript@3.6.3)(eslint@9.35.0(jiti@1.21.6))
     transitivePeerDependencies:
       - '@typescript-eslint/parser'
       - eslint-import-resolver-node
@@ -10808,7 +10817,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-module-utils@2.12.0(@typescript-eslint/parser@8.44.0(eslint@9.35.0(jiti@1.21.6))(typescript@5.8.3))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3)(eslint@9.35.0(jiti@1.21.6)):
+  eslint-module-utils@2.12.0(@typescript-eslint/parser@8.44.0(eslint@9.35.0(jiti@1.21.6))(typescript@5.8.3))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@8.44.0(eslint@9.35.0(jiti@1.21.6))(typescript@5.8.3))(eslint-plugin-import@2.31.0)(eslint@9.35.0(jiti@1.21.6)))(eslint@9.35.0(jiti@1.21.6)):
     dependencies:
       debug: 3.2.7
     optionalDependencies:
@@ -10819,7 +10828,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-module-utils@2.12.0(@typescript-eslint/parser@8.44.0(eslint@9.35.0(jiti@1.21.6))(typescript@5.8.3))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@4.4.4)(eslint@9.35.0(jiti@1.21.6)):
+  eslint-module-utils@2.12.0(@typescript-eslint/parser@8.44.0(eslint@9.35.0(jiti@1.21.6))(typescript@5.8.3))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@4.4.4(eslint-plugin-import@2.31.0)(eslint@9.35.0(jiti@1.21.6)))(eslint@9.35.0(jiti@1.21.6)):
     dependencies:
       debug: 3.2.7
     optionalDependencies:
@@ -10830,7 +10839,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-module-utils@2.12.0(@typescript-eslint/parser@8.44.0(eslint@9.35.0(jiti@1.21.6))(typescript@5.8.3))(eslint-import-resolver-typescript@3.6.3)(eslint@9.35.0(jiti@1.21.6)):
+  eslint-module-utils@2.12.0(@typescript-eslint/parser@8.44.0(eslint@9.35.0(jiti@1.21.6))(typescript@5.8.3))(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@8.44.0(eslint@9.35.0(jiti@1.21.6))(typescript@5.8.3))(eslint-plugin-import@2.31.0)(eslint@9.35.0(jiti@1.21.6)))(eslint@9.35.0(jiti@1.21.6)):
     dependencies:
       debug: 3.2.7
     optionalDependencies:
@@ -10873,7 +10882,7 @@ snapshots:
       doctrine: 2.1.0
       eslint: 9.35.0(jiti@1.21.6)
       eslint-import-resolver-node: 0.3.9
-      eslint-module-utils: 2.12.0(@typescript-eslint/parser@8.44.0(eslint@9.35.0(jiti@1.21.6))(typescript@5.8.3))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3)(eslint@9.35.0(jiti@1.21.6))
+      eslint-module-utils: 2.12.0(@typescript-eslint/parser@8.44.0(eslint@9.35.0(jiti@1.21.6))(typescript@5.8.3))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@8.44.0(eslint@9.35.0(jiti@1.21.6))(typescript@5.8.3))(eslint-plugin-import@2.31.0)(eslint@9.35.0(jiti@1.21.6)))(eslint@9.35.0(jiti@1.21.6))
       hasown: 2.0.2
       is-core-module: 2.15.1
       is-glob: 4.0.3
@@ -10902,7 +10911,7 @@ snapshots:
       doctrine: 2.1.0
       eslint: 9.35.0(jiti@1.21.6)
       eslint-import-resolver-node: 0.3.9
-      eslint-module-utils: 2.12.0(@typescript-eslint/parser@8.44.0(eslint@9.35.0(jiti@1.21.6))(typescript@5.8.3))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@4.4.4)(eslint@9.35.0(jiti@1.21.6))
+      eslint-module-utils: 2.12.0(@typescript-eslint/parser@8.44.0(eslint@9.35.0(jiti@1.21.6))(typescript@5.8.3))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@4.4.4(eslint-plugin-import@2.31.0)(eslint@9.35.0(jiti@1.21.6)))(eslint@9.35.0(jiti@1.21.6))
       hasown: 2.0.2
       is-core-module: 2.15.1
       is-glob: 4.0.3
@@ -11273,7 +11282,7 @@ snapshots:
     dependencies:
       invariant: 2.2.4
 
-  expo-router@5.1.7(05fdc8f0b9d7d2c39ebc900641e0a64f):
+  expo-router@5.1.7(elhqv4oebug2twzkdgd75kxfry):
     dependencies:
       '@expo/metro-runtime': 5.0.5(react-native@0.79.5(@babel/core@7.28.4)(@types/react@19.0.14)(react@19.0.0))
       '@expo/schema-utils': 0.1.7
@@ -11302,6 +11311,10 @@ snapshots:
       - react
       - react-native
       - supports-color
+
+  expo-secure-store@14.2.4(expo@53.0.23(@babel/core@7.28.4)(@expo/metro-runtime@5.0.5(react-native@0.79.5(@babel/core@7.28.4)(@types/react@19.0.14)(react@19.0.0)))(react-native-webview@13.13.5(react-native@0.79.5(@babel/core@7.28.4)(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native@0.79.5(@babel/core@7.28.4)(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)):
+    dependencies:
+      expo: 53.0.23(@babel/core@7.28.4)(@expo/metro-runtime@5.0.5(react-native@0.79.5(@babel/core@7.28.4)(@types/react@19.0.14)(react@19.0.0)))(react-native-webview@13.13.5(react-native@0.79.5(@babel/core@7.28.4)(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native@0.79.5(@babel/core@7.28.4)(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
 
   expo-splash-screen@0.30.10(expo@53.0.23(@babel/core@7.28.4)(@expo/metro-runtime@5.0.5(react-native@0.79.5(@babel/core@7.28.4)(@types/react@19.0.14)(react@19.0.0)))(react-native-webview@13.13.5(react-native@0.79.5(@babel/core@7.28.4)(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native@0.79.5(@babel/core@7.28.4)(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)):
     dependencies:
