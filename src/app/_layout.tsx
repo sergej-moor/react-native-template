@@ -39,7 +39,13 @@ function GuardedStack() {
   const { t } = useTranslation();
   const [isFirstTime] = useIsFirstTime();
 
-  const isAuthenticated = status === 'signIn';
+  // Clean logic for status bar style to avoid nested ternary
+  let statusBarStyle: 'dark' | 'light' = 'light';
+  if (isFirstTime) {
+    statusBarStyle = 'dark';
+  } else if (status === 'signIn') {
+    statusBarStyle = 'dark';
+  }
 
   return (
     <Stack>
@@ -47,40 +53,41 @@ function GuardedStack() {
         name="onboarding"
         options={{
           headerShown: false,
-          // eslint-disable-next-line no-nested-ternary
-          statusBarStyle: isFirstTime
-            ? 'dark'
-            : isAuthenticated
-              ? 'dark'
-              : 'light',
+          statusBarStyle,
         }}
       />
 
-      <Stack.Protected guard={isAuthenticated}>
-        <Stack.Screen name="(app)" options={{ headerShown: false }} />
-        <Stack.Screen
-          name="update-password"
-          options={{
-            title: t('updatePassword.title'),
-          }}
-        />
-      </Stack.Protected>
+      <Stack.Screen name="(app)" options={{ headerShown: false }} />
 
-      <Stack.Protected guard={!isAuthenticated}>
-        <Stack.Screen name="sign-in" options={{ headerShown: false }} />
-        <Stack.Screen
-          name="sign-up"
-          options={{
-            title: t('signUp.title'),
-          }}
-        />
-        <Stack.Screen
-          name="forgot-password"
-          options={{
-            title: t('forgotPassword.title'),
-          }}
-        />
-      </Stack.Protected>
+      <Stack.Screen
+        name="update-password"
+        options={{
+          title: t('updatePassword.title'),
+          presentation: 'modal',
+        }}
+      />
+
+      <Stack.Screen
+        name="sign-in"
+        options={{
+          title: t('auth.signIn.title'),
+          presentation: 'modal',
+        }}
+      />
+      <Stack.Screen
+        name="sign-up"
+        options={{
+          title: t('auth.signUp.title'),
+          presentation: 'modal',
+        }}
+      />
+      <Stack.Screen
+        name="forgot-password"
+        options={{
+          title: t('forgotPassword.title'),
+          presentation: 'modal',
+        }}
+      />
 
       <Stack.Screen
         name="www"

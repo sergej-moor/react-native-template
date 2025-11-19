@@ -88,6 +88,12 @@
     "english": "English",
     "generale": "General",
     "github": "Github",
+    "guest": {
+      "reset": "Reset App",
+      "signIn": "Sign In",
+      "signUp": "Sign Up",
+      "subtitle": "You are currently using a guest account. Sign up to save your data."
+    },
     "language": "Language",
     "links": "Links",
     "logout": "Logout",

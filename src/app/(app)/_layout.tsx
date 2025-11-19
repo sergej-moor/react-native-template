@@ -27,9 +27,12 @@ export default function TabLayout() {
   if (isFirstTime) {
     return <Redirect href="/onboarding" />;
   }
-  if (status === 'signOut') {
-    return <Redirect href="/sign-in" />;
-  }
+  // Removed the redirect to sign-in if status === 'signOut'
+  // Because we support anonymous login (soft login), everyone gets access.
+  // If status is really 'signOut' (e.g. explicit logout), the Root Layout
+  // or hydration logic should handle showing the right initial state,
+  // but blocking access to tabs is no longer desired behavior.
+
   if (status === 'idle') {
     return null;
   }
