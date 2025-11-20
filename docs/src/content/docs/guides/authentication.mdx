@@ -8,13 +8,13 @@ head:
 
 import CodeBlock from '../../../components/code.astro';
 
-Most applications require some form of authentication, and a poorly designed approach can lead to significant issues. This starter kit provides a solid foundation for implementing authentication in your application using Supabase.
+Most applications require some form of authentication, and a poorly designed approach can lead to significant issues. This starter kit provides a solid foundation for implementing authentication in your application using Supabase, including support for soft login (anonymous guest access), account linking, and secure token storage.
 
-We use [Zustand](https://github.com/pmndrs/zustand) to globally manage the application's authentication state. Zustand is a simple, high-performance state management library that integrates seamlessly with React. It offers advantages over the standard Context API, such as selectors to prevent unnecessary re-renders and the flexibility to be used outside of the React component tree.
+We use [Zustand](https://github.com/pmndrs/zustand) to globally manage the application's authentication state, mirroring the Supabase session status in real-time.
 
 ## Authentication Store
 
-The authentication store, located at `src/lib/auth/index.tsx`, is the central hub for managing the app's authentication state.
+The authentication store, located at `src/lib/auth/index.tsx`, is the central hub for managing the app's authentication state. It listens to Supabase's `onAuthStateChange` event, ensuring that your UI is always in sync with the backend.
 
 <CodeBlock file="src/lib/auth/index.tsx" />
 
@@ -23,77 +23,100 @@ The store is composed of the following states and actions:
 -   **States**:
     -   `session`: The user's session object from Supabase.
     -   `user`: The user object from Supabase.
-    -   `status`: The authentication status, which can be:
-        -   `idle`: The initial state before authentication status has been determined.
-        -   `signIn`: The user is authenticated.
-        -   `signOut`: The user is not authenticated.
+    -   `status`: The authentication status (`idle`, `signIn`, `signOut`).
+    -   `isAnonymous`: A boolean flag indicating if the current user is a guest (anonymous).
 
 -   **Actions**:
-    -   `signIn`: A function to sign in the user. It takes the `session` and `user` objects, persists them to storage, and updates the state.
-    -   `signOut`: An action to sign out the user. It clears the session from Supabase, removes the data from storage, and updates the state.
-    -   `hydrate`: An action that runs on app startup to check for a persisted session in storage. It updates the state to `signIn` if a valid session is found, or `signOut` otherwise.
+    -   `signIn`: (Deprecated for direct use) Internal action to update state.
+    -   `signOut`: Signs out the user from Supabase and resets the app state (including the "First Time" flag), effectively redirecting them to the onboarding flow.
+    -   `hydrate`: Initializes the auth state. If no session exists, it automatically creates an anonymous session (Soft Login).
 
-The store also automatically listens to Supabase's `onAuthStateChange` event, allowing it to respond to authentication changes in real-time from any part of the application, such as token refreshes or user updates.
+## Secure Storage
 
-## Using the Authentication Store
+We use `expo-secure-store` via a custom adapter (`src/lib/auth/secure-storage.ts`) to persist Supabase sessions securely. This is critical for security, as standard `AsyncStorage` or `MMKV` are not encrypted.
 
-To use the store, import it from `@/lib`. You can then access the state or call actions from any component or even from outside the React tree.
+```typescript
+// src/lib/auth/secure-storage.ts
+import * as SecureStore from 'expo-secure-store';
 
-```tsx
-import { useAuth, hydrateAuth } from '@/lib';
+export const SupabaseStorage = {
+  getItem: (key: string) => {
+    return SecureStore.getItemAsync(key);
+  },
+  setItem: (key: string, value: string) => {
+    SecureStore.setItemAsync(key, value);
+  },
+  removeItem: (key: string) => {
+    SecureStore.deleteItemAsync(key);
+  },
+};
+```
 
-// Call this on app startup to restore the session
-hydrateAuth();
+## Soft Login (Anonymous Auth)
 
-const MyComponent = () => {
-  const status = useAuth.use.status();
-  const user = useAuth.use.user();
-  const signOut = useAuth.use.signOut();
+The app is designed with a "Soft Login" flow. When a user first opens the app, they are automatically signed in as an anonymous user. This allows them to explore the app and create content (like Todos) without immediately hitting a registration wall.
 
-  return (
-    <View>
-      <Text>Status: {status}</Text>
-      {user && <Text>Welcome, {user.email}</Text>}
-      <Button title="Sign Out" onPress={signOut} />
-    </View>
-  );
+-   **Flow**:
+    1.  App launches.
+    2.  `hydrateAuth` checks for a session.
+    3.  If none, calls `supabase.auth.signInAnonymously()`.
+    4.  User is logged in as a guest (`isAnonymous: true`).
+
+## Guest Conversion (Account Linking)
+
+When a guest user decides to sign up (e.g., to sync their data or access premium features), we **convert** their anonymous account to a registered account. This preserves their `user_id` and all associated data (like Todos).
+
+We handle this in `src/api/auth/use-sign-up.ts`:
+
+```typescript
+const signUpOrUpdate = async (variables: Variables): Promise<void> => {
+  const { user: currentUser } = useAuth.getState();
+  const isAnonymous = currentUser?.is_anonymous;
+
+  if (isAnonymous) {
+    // Convert Guest -> Registered User
+    await supabase.auth.updateUser({
+      email: variables.email,
+      password: variables.password,
+      data: { name: variables.name },
+    });
+  } else {
+    // Standard Sign Up
+    await supabase.auth.signUp({
+      email: variables.email,
+      password: variables.password,
+      // ...
+    });
+  }
 };
 ```
 
 ## Guarding Routes
 
-A common use case is to protect certain parts of your application based on the user's authentication status. With our setup, you can easily guard your routes.
+We use `expo-router` for navigation. The root layout (`src/app/_layout.tsx`) handles global modals (like Sign In/Sign Up), while the app logic (`src/app/(app)/_layout.tsx`) allows access to all routes for both Guests and Registered users.
 
-The root layout file, `src/app/_layout.tsx`, is a great example of how to implement route protection. It checks the authentication `status` from the store and renders the appropriate navigator—either the main app navigator for authenticated users or the sign-in navigator for unauthenticated users.
-
-<CodeBlock file="src/app/_layout.tsx" />
+Specific actions (like "Delete Account") are conditionally hidden or disabled for Guest users in the UI.
 
 ## Deleting a User Account
 
-To allow users to delete their own accounts, you need to create a custom RPC (Remote Procedure Call) function in your Supabase database. This is necessary because Supabase's `auth.users` table has row-level security (RLS) enabled, which prevents direct deletion of user records from the client-side for security reasons.
+To allow users to delete their own accounts, you need to create a custom RPC function in Supabase.
 
-The `useDeleteUser` hook, located at `src/api/auth/use-delete-user.ts`, calls a Supabase RPC function named `delete_user` to perform this action.
+1.  **Create the function** in Supabase SQL Editor:
 
-You can add this function by navigating to the **SQL Editor** in your Supabase project dashboard and running the following SQL queries.
+    ```sql
+    create or replace function public.delete_user()
+    returns void
+    language sql
+    security definer
+    as $$
+      delete from auth.users where id = auth.uid();
+    $$;
+    ```
 
-### 1. Create the `delete_user` function:
-This function deletes the user record corresponding to the currently authenticated user who calls it. The `security definer` option allows the function to run with the permissions of the user who defined it, bypassing RLS.
+2.  **Grant permission**:
 
-```sql
-create or replace function public.delete_user()
-returns void
-language sql
-security definer
-as $$
-  delete from auth.users where id = auth.uid();
-$$;
-```
+    ```sql
+    grant execute on function public.delete_user() to authenticated;
+    ```
 
-### 2. Grant execution permission:
-After creating the function, you need to grant permission for authenticated users to execute it.
-
-```sql
-grant execute on function public.delete_user() to authenticated;
-```
-
-With this function in place, the `useDeleteUser` mutation will work as expected, allowing users to securely delete their accounts.
+The `useDeleteUser` hook (`src/api/auth/use-delete-user.ts`) calls this function. When a user deletes their account, we also reset the local "First Time" state (`IS_FIRST_TIME`), redirecting them back to the onboarding screens.
