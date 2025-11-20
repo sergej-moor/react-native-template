@@ -88,3 +88,19 @@ const RANDOM_STRING_END = 9;
 export function generateTodoId(): string {
   return `${Date.now()}-${Math.random().toString(RANDOM_STRING_BASE).substring(RANDOM_STRING_START, RANDOM_STRING_END)}`;
 }
+
+// UUIDs are 36 characters long. Our local IDs are shorter (~21 chars).
+
+const MIN_ID_LENGTH_FOR_UUID = 30; // Threshold to distinguish local IDs from UUIDs
+
+// Check if an ID is a locally generated ID (pending sync)
+// UUIDs are 36 chars long. Our local IDs are shorter/different format.
+export function isLocalId(id: string): boolean {
+  // Simple check: UUIDs have 4 hyphens. Our local IDs have 1.
+  // Or check length. UUID is 36.
+  // Our local ID: Date.now() (13) + '-' (1) + Random (7) = ~21 chars.
+  return (
+    id.length < MIN_ID_LENGTH_FOR_UUID ||
+    !id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)
+  );
+}

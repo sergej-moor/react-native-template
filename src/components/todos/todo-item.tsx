@@ -1,9 +1,9 @@
 import React from 'react';
 import { Pressable } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
-import Svg, { Path } from 'react-native-svg';
+import Svg, { Circle, Path } from 'react-native-svg';
 
-import type { Todo } from '@/lib/todos';
+import { isLocalId, type Todo } from '@/lib/todos';
 
 import { Checkbox, Text, View } from '../ui';
 
@@ -46,6 +46,18 @@ const DeleteIcon = () => (
   </Svg>
 );
 
+const ClockIcon = () => (
+  <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="#9ca3af">
+    <Circle cx="12" cy="12" r="10" strokeWidth={2} />
+    <Path
+      d="M12 6v6l4 2"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
 const LeftSwipeAction = () => (
   <View className="mb-2 justify-center">
     <View className="h-full items-center justify-center rounded-l-xl bg-blue-500 px-6 dark:bg-blue-600">
@@ -65,19 +77,29 @@ const RightSwipeAction = () => (
 export const TodoItem = React.memo(
   ({ todo, onToggle, onDelete, onEdit }: TodoItemProps) => {
     const swipeableRef = React.useRef<Swipeable>(null);
+    const isPending = isLocalId(todo.id);
 
     const handleToggle = React.useCallback(() => {
+      if (isPending) {
+        return;
+      } // Disable toggle for pending items
       onToggle(todo.id, !todo.completed);
-    }, [todo.id, todo.completed, onToggle]);
+    }, [todo.id, todo.completed, onToggle, isPending]);
 
     const handleDelete = React.useCallback(() => {
+      if (isPending) {
+        return;
+      } // Disable delete for pending items
       onDelete(todo.id);
-    }, [todo.id, onDelete]);
+    }, [todo.id, onDelete, isPending]);
 
     const handleEdit = React.useCallback(() => {
+      if (isPending) {
+        return;
+      } // Disable edit for pending items
       swipeableRef.current?.close();
       onEdit?.(todo);
-    }, [todo, onEdit]);
+    }, [todo, onEdit, isPending]);
 
     const renderLeftActions = React.useCallback(() => <LeftSwipeAction />, []);
     const renderRightActions = React.useCallback(
@@ -96,19 +118,27 @@ export const TodoItem = React.memo(
         rightThreshold={40}
         onSwipeableLeftOpen={handleEdit}
         onSwipeableRightOpen={handleDelete}
+        enabled={!isPending} // Disable swipe gestures for pending items
       >
         <Pressable
           onPress={handleToggle}
-          className="mb-2 flex-row items-center gap-2 rounded-xl border border-neutral-200 bg-white p-5 shadow-sm active:bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900 dark:active:bg-neutral-800"
+          disabled={isPending}
+          className={`mb-2 flex-row items-center gap-2 rounded-xl border border-neutral-200 bg-white p-5 shadow-sm active:bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900 dark:active:bg-neutral-800 ${
+            isPending ? 'opacity-60' : ''
+          }`}
         >
           <View className="p-2">
-            <Checkbox
-              checked={todo.completed}
-              onChange={handleToggle}
-              accessibilityLabel={
-                todo.completed ? 'Mark as incomplete' : 'Mark as complete'
-              }
-            />
+            {isPending ? (
+              <ClockIcon />
+            ) : (
+              <Checkbox
+                checked={todo.completed}
+                onChange={handleToggle}
+                accessibilityLabel={
+                  todo.completed ? 'Mark as incomplete' : 'Mark as complete'
+                }
+              />
+            )}
           </View>
 
           <View className="flex-1">
