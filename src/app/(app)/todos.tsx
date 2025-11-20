@@ -1,5 +1,7 @@
 /* eslint-disable max-lines-per-function */
 import type { BottomSheetModal } from '@gorhom/bottom-sheet';
+import { useNetInfo } from '@react-native-community/netinfo';
+import { useIsMutating } from '@tanstack/react-query';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable } from 'react-native';
@@ -66,6 +68,17 @@ export default function TodosScreen() {
   const toggleTodo = useToggleTodo();
   const deleteTodo = useDeleteTodo();
   const clearCompleted = useClearCompleted();
+
+  // Sync Status Logic
+  const netInfo = useNetInfo();
+  const isMutating = useIsMutating({ mutationKey: ['todos'] });
+
+  let syncStatus: 'saved' | 'syncing' | 'offline' = 'saved';
+  if (!netInfo.isConnected) {
+    syncStatus = 'offline';
+  } else if (isMutating > 0) {
+    syncStatus = 'syncing';
+  }
 
   const filteredTodos = React.useMemo(
     () => filterTodos(allTodos, filter),
@@ -215,6 +228,7 @@ export default function TodosScreen() {
             completedCount={stats.completed}
             onClearCompleted={handleClearCompleted}
             isClearing={clearCompleted.isPending}
+            syncStatus={syncStatus}
           />
         </View>
         <TodoFiltersComponent
