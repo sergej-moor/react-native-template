@@ -5,11 +5,15 @@ import { showMessage } from 'react-native-flash-message';
 
 import { useLogin } from '@/api/auth/use-login';
 import { useResendConfirmation } from '@/api/auth/use-resend-confirmation';
+import { useTodos } from '@/api/todos';
 import { LoginForm, type LoginFormProps } from '@/components/login-form';
 import { FocusAwareStatusBar } from '@/components/ui';
+import { useAuth } from '@/lib';
 
 export default function Login() {
   const router = useRouter();
+  const { isAnonymous } = useAuth();
+  const { data: todos } = useTodos();
 
   const { mutate: resendConfirmation } = useResendConfirmation({
     onSuccess: () => {
@@ -71,7 +75,24 @@ export default function Login() {
   });
 
   const onSubmit: LoginFormProps['onSubmit'] = (data) => {
-    login(data);
+    const hasTodos = todos && todos.length > 0;
+
+    if (isAnonymous && hasTodos) {
+      Alert.alert(
+        'Warning: Data Loss',
+        'You are currently using a guest account with unsaved items. Logging into an existing account will discard your current guest data. Do you want to continue?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Continue & Discard',
+            style: 'destructive',
+            onPress: () => login(data),
+          },
+        ],
+      );
+    } else {
+      login(data);
+    }
   };
 
   return (
