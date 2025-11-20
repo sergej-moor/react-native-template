@@ -79,13 +79,6 @@ export default function TodosScreen() {
       createTodo.mutate(
         { title: data.title, description: data.description },
         {
-          onSuccess: () => {
-            showMessage({
-              message: t('todos.messages.created'),
-              type: 'success',
-            });
-            dismissAdd();
-          },
           onError: () => {
             showMessage({
               message: t('todos.messages.createError'),
@@ -94,6 +87,12 @@ export default function TodosScreen() {
           },
         },
       );
+      // Optimistic UI: Close immediately
+      dismissAdd();
+      showMessage({
+        message: t('todos.messages.created'),
+        type: 'success',
+      });
     },
     [createTodo, t, dismissAdd],
   );
@@ -119,14 +118,6 @@ export default function TodosScreen() {
           description: data.description,
         },
         {
-          onSuccess: () => {
-            showMessage({
-              message: t('todos.messages.updated'),
-              type: 'success',
-            });
-            dismissEdit();
-            setSelectedTodo(null);
-          },
           onError: () => {
             showMessage({
               message: t('todos.messages.updateError'),
@@ -135,6 +126,13 @@ export default function TodosScreen() {
           },
         },
       );
+      // Optimistic UI: Close immediately
+      dismissEdit();
+      setSelectedTodo(null);
+      showMessage({
+        message: t('todos.messages.updated'),
+        type: 'success',
+      });
     },
     [updateTodo, selectedTodo, t, dismissEdit],
   );
@@ -261,7 +259,8 @@ export default function TodosScreen() {
         >
           <TodoForm
             onSubmit={handleCreateTodo}
-            isLoading={createTodo.isPending}
+            // We don't pass isLoading because we close modal optimistically
+            isLoading={false}
             submitLabel={t('todos.form.createButton')}
           />
         </BottomSheetKeyboardAwareScrollView>
@@ -280,7 +279,8 @@ export default function TodosScreen() {
           {selectedTodo && (
             <TodoForm
               onSubmit={handleUpdateTodo}
-              isLoading={updateTodo.isPending}
+              // We don't pass isLoading because we close modal optimistically
+              isLoading={false}
               defaultValues={{
                 title: selectedTodo.title,
                 description: selectedTodo.description ?? '',

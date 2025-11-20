@@ -11,7 +11,7 @@ import {
   Text,
   View,
 } from '@/components/ui';
-import { translate } from '@/lib';
+import { hydrateAuth, translate } from '@/lib';
 import { useIsFirstTime } from '@/lib/hooks';
 
 // Step Data Interface
@@ -71,8 +71,15 @@ export default function Onboarding() {
     }
   };
 
-  const finishOnboarding = (path: Href = '/') => {
+  const finishOnboarding = async (path: Href = '/') => {
     setIsFirstTime(false);
+
+    // If the user chooses to continue as guest (path is '/'),
+    // we must ensure an anonymous session is created before navigating.
+    if (path === '/') {
+      await hydrateAuth();
+    }
+
     router.replace(path);
   };
 
