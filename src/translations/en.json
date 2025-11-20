@@ -27,8 +27,10 @@
         "nameRequired": "Name is required",
         "passwordConfirmationRequired": "Password is required",
         "passwordRequired": "Password is required",
+        "passwordSpecial": "Password must contain at least one number or special character",
+        "passwordUppercase": "Password must contain at least one uppercase letter",
         "passwordsDoNotMatch": "Passwords do not match",
-        "shortPassword": "Password must be at least 6 characters"
+        "shortPassword": "Password must be at least 8 characters"
       },
       "fields": {
         "email": "Email",
