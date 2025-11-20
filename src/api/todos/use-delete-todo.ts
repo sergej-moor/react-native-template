@@ -1,8 +1,8 @@
 import { createMutation } from 'react-query-kit';
 
 import { queryClient } from '@/api/common';
+import { supabase } from '@/lib/supabase';
 import type { Todo } from '@/lib/todos';
-import { deleteTodo, restoreTodo } from '@/lib/todos';
 
 type DeleteTodoInput = {
   id: string;
@@ -14,7 +14,14 @@ type DeleteTodoContext = {
 
 export const useDeleteTodo = createMutation<void, DeleteTodoInput>({
   mutationFn: async (input: DeleteTodoInput) => {
-    await deleteTodo(input.id);
+    const { error } = await supabase
+      .from('todos')
+      .update({ deleted_at: new Date().toISOString() }) // Soft delete
+      .eq('id', input.id);
+
+    if (error) {
+      throw error;
+    }
   },
   onSuccess: () => {
     queryClient.invalidateQueries({ queryKey: ['todos'] });
@@ -41,8 +48,18 @@ export const useDeleteTodo = createMutation<void, DeleteTodoInput>({
   },
 });
 
-export const useRestoreTodo = createMutation<Todo, DeleteTodoInput>({
-  mutationFn: async (input: DeleteTodoInput) => restoreTodo(input.id),
+// Restore not needed for standard UI, but if we implement trash bin later:
+export const useRestoreTodo = createMutation<void, DeleteTodoInput>({
+  mutationFn: async (input: DeleteTodoInput) => {
+    const { error } = await supabase
+      .from('todos')
+      .update({ deleted_at: null })
+      .eq('id', input.id);
+
+    if (error) {
+      throw error;
+    }
+  },
   onSuccess: () => {
     queryClient.invalidateQueries({ queryKey: ['todos'] });
   },

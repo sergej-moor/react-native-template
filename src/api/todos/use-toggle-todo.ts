@@ -1,8 +1,8 @@
 import { createMutation } from 'react-query-kit';
 
 import { queryClient } from '@/api/common';
-import type { Todo } from '@/lib/todos';
-import { updateTodo } from '@/lib/todos';
+import { supabase } from '@/lib/supabase';
+import type { DBTodo, Todo } from '@/lib/todos';
 
 type ToggleTodoInput = {
   id: string;
@@ -14,8 +14,29 @@ type ToggleTodoContext = {
 };
 
 export const useToggleTodo = createMutation<Todo, ToggleTodoInput>({
-  mutationFn: async (input: ToggleTodoInput) =>
-    updateTodo(input.id, { completed: input.completed }),
+  mutationFn: async (input: ToggleTodoInput) => {
+    const { data, error } = await supabase
+      .from('todos')
+      .update({ completed: input.completed })
+      .eq('id', input.id)
+      .select()
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    const dbTodo = data as DBTodo;
+    return {
+      id: dbTodo.id,
+      title: dbTodo.title,
+      description: dbTodo.description ?? undefined,
+      completed: dbTodo.completed,
+      createdAt: dbTodo.created_at,
+      updatedAt: dbTodo.updated_at,
+      userId: dbTodo.user_id,
+    };
+  },
   onSuccess: () => {
     queryClient.invalidateQueries({ queryKey: ['todos'] });
   },

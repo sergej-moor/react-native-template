@@ -17,6 +17,18 @@ export type Todo = {
   lastSyncedAt?: string;
 };
 
+// Database type (Supabase)
+export type DBTodo = {
+  id: string;
+  user_id: string;
+  title: string;
+  description: string | null;
+  completed: boolean;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+};
+
 export type CreateTodoInput = {
   title: string;
   description?: string;

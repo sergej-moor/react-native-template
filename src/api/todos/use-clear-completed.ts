@@ -1,8 +1,8 @@
 import { createMutation } from 'react-query-kit';
 
 import { queryClient } from '@/api/common';
+import { supabase } from '@/lib/supabase';
 import type { Todo } from '@/lib/todos';
-import { clearCompletedTodos } from '@/lib/todos';
 
 type ClearCompletedContext = {
   previousTodos: Array<Todo> | undefined;
@@ -10,7 +10,14 @@ type ClearCompletedContext = {
 
 export const useClearCompleted = createMutation<void, void>({
   mutationFn: async () => {
-    await clearCompletedTodos();
+    const { error } = await supabase
+      .from('todos')
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('completed', true);
+
+    if (error) {
+      throw error;
+    }
   },
   onSuccess: () => {
     queryClient.invalidateQueries({ queryKey: ['todos'] });
