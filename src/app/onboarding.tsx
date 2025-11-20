@@ -1,7 +1,8 @@
 /* eslint-disable max-lines-per-function */
+import NetInfo from '@react-native-community/netinfo';
 import { type Href, useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { TouchableOpacity } from 'react-native';
+import { Alert, TouchableOpacity } from 'react-native';
 
 import { Cover } from '@/components/cover';
 import {
@@ -72,14 +73,21 @@ export default function Onboarding() {
   };
 
   const finishOnboarding = async (path: Href = '/') => {
-    setIsFirstTime(false);
-
     // If the user chooses to continue as guest (path is '/'),
     // we must ensure an anonymous session is created before navigating.
     if (path === '/') {
+      const state = await NetInfo.fetch();
+      if (!state.isConnected) {
+        Alert.alert(
+          'No Internet Connection',
+          'An internet connection is required to create a new guest account. Please connect to the internet and try again.',
+        );
+        return;
+      }
       await hydrateAuth();
     }
 
+    setIsFirstTime(false);
     router.replace(path);
   };
 

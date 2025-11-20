@@ -21,4 +21,7 @@ const login = async (variables: Variables): Promise<void> => {
 
 export const useLogin = createMutation<void, Variables>({
   mutationFn: login,
+  // Auth mutations should not be queued if offline.
+  // We want them to fail immediately so the user sees the error.
+  networkMode: 'always',
 });

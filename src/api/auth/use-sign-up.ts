@@ -54,4 +54,7 @@ const signUpOrUpdate = async (variables: Variables): Promise<void> => {
 
 export const useSignUp = createMutation<void, Variables>({
   mutationFn: signUpOrUpdate,
+  // Auth mutations should not be queued if offline.
+  // We want them to fail immediately so the user sees the error.
+  networkMode: 'always',
 });
