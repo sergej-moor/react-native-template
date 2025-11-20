@@ -73,8 +73,7 @@ export default function Onboarding() {
   };
 
   const finishOnboarding = async (path: Href = '/') => {
-    // If the user chooses to continue as guest (path is '/'),
-    // we must ensure an anonymous session is created before navigating.
+    // If Guest Mode
     if (path === '/') {
       const state = await NetInfo.fetch();
       if (!state.isConnected) {
@@ -85,10 +84,14 @@ export default function Onboarding() {
         return;
       }
       await hydrateAuth();
+      setIsFirstTime(false);
+      router.replace(path);
+    } else {
+      // If Sign In / Sign Up -> Just navigate there.
+      // We use push so the user can go back to this screen.
+      // We DO NOT set isFirstTime(false) yet, so if they go back, they are still in onboarding.
+      router.push(path);
     }
-
-    setIsFirstTime(false);
-    router.replace(path);
   };
 
   return (

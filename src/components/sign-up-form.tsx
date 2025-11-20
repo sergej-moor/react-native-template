@@ -1,4 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Link } from 'expo-router';
 import { type SubmitHandler, useForm } from 'react-hook-form';
 import { KeyboardAvoidingView } from 'react-native';
 import { object, string, type z } from 'zod';
@@ -92,6 +93,14 @@ export const SignUpForm = ({
             loading={isPending}
             disabled={isPending}
           />
+          <View className="mt-4 items-center">
+            <Text>
+              Already have an account?{' '}
+              <Link href="/sign-in" disabled={isPending} replace>
+                <Text className="font-bold text-primary-500">Sign In</Text>
+              </Link>
+            </Text>
+          </View>
         </View>
       </View>
     </KeyboardAvoidingView>

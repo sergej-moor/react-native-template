@@ -68,7 +68,7 @@ export const LoginForm = ({
           />
           <Text>
             {translate('auth.signIn.newAccount')}{' '}
-            <Link href="/sign-up" disabled={isLoading}>
+            <Link href="/sign-up" disabled={isLoading} replace>
               <Text className="font-bold text-black">
                 {translate('auth.signIn.buttons.signUp')}
               </Text>
