@@ -8,11 +8,12 @@ import { useResendConfirmation } from '@/api/auth/use-resend-confirmation';
 import { useTodos } from '@/api/todos';
 import { LoginForm, type LoginFormProps } from '@/components/login-form';
 import { FocusAwareStatusBar } from '@/components/ui';
-import { useAuth } from '@/lib';
+import { useAuth, useIsFirstTime } from '@/lib';
 
 export default function Login() {
   const router = useRouter();
   const { isAnonymous } = useAuth();
+  const [, setIsFirstTime] = useIsFirstTime();
   const { data: todos } = useTodos();
 
   const { mutate: resendConfirmation } = useResendConfirmation({
@@ -43,7 +44,8 @@ export default function Login() {
 
   const { mutate: login, isPending } = useLogin({
     onSuccess: () => {
-      router.push('/');
+      setIsFirstTime(false);
+      router.replace('/');
     },
     onError: (error, variables) => {
       const errorMessage = error.message.toLowerCase();

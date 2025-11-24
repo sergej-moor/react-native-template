@@ -3,7 +3,7 @@ import '../../global.css';
 
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { ThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
+import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -35,9 +35,19 @@ SplashScreen.setOptions({
 });
 
 function GuardedStack() {
-  const status = useAuth.use.status();
   const { t } = useTranslation();
+  const router = useRouter();
+  const segments = useSegments();
+  const status = useAuth.use.status();
   const [isFirstTime] = useIsFirstTime();
+
+  React.useEffect(() => {
+    const inAuthGroup = segments[0] === '(app)';
+
+    if (isFirstTime && inAuthGroup) {
+      router.replace('/onboarding');
+    }
+  }, [isFirstTime, segments, router]);
 
   // Clean logic for status bar style to avoid nested ternary
   let statusBarStyle: 'dark' | 'light' = 'light';

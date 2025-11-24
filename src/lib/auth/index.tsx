@@ -42,12 +42,16 @@ supabase.auth.onAuthStateChange((_event, session) => {
 
 // Helper to sign out and reset app state
 export const signOut = async () => {
-  // 1. Sign out from Supabase (clears session)
-  await supabase.auth.signOut();
-
-  // 2. Reset "First Time" flag so user sees Onboarding again
-  // We must manually set this because we are outside a React component
-  storage.set('IS_FIRST_TIME', true);
+  try {
+    // 1. Sign out from Supabase (clears session)
+    await supabase.auth.signOut();
+  } catch (error) {
+    console.error('Error signing out:', error);
+  } finally {
+    // 2. Reset "First Time" flag so user sees Onboarding again
+    // We must manually set this because we are outside a React component
+    storage.set('IS_FIRST_TIME', true);
+  }
 
   // 3. We DO NOT sign in anonymously here.
   // The router will see 'isFirstTime' is true and redirect to /onboarding.

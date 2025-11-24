@@ -61,8 +61,8 @@ export default function Settings() {
         {
           text: 'Reset',
           style: 'destructive',
-          onPress: () => {
-            signOut();
+          onPress: async () => {
+            await signOut();
             router.replace('/');
           },
         },

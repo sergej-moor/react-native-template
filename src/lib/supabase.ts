@@ -1,12 +1,12 @@
 import { Env } from '@env';
 import { createClient } from '@supabase/supabase-js';
 
-import { SupabaseStorage } from './auth/secure-storage';
+import { supabaseStorageAdapter } from './auth/storage-adapter';
 
 // Create a single supabase client for interacting with your database
 export const supabase = createClient(Env.SUPABASE_URL, Env.SUPABASE_ANON_KEY, {
   auth: {
-    storage: SupabaseStorage,
+    storage: supabaseStorageAdapter,
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: false,
