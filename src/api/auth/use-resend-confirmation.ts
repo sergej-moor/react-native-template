@@ -1,6 +1,6 @@
 import { createMutation } from 'react-query-kit';
 
-import { supabase } from '@/lib/supabase';
+import { authService } from '@/lib/auth/auth-service';
 
 type Variables = {
   email: string;
@@ -11,13 +11,10 @@ type Response = {
 };
 
 const resendConfirmation = async (variables: Variables): Promise<Response> => {
-  const { error } = await supabase.auth.resend({
-    type: 'signup',
-    email: variables.email,
-  });
+  const { error } = await authService.resendConfirmation(variables.email);
 
   if (error) {
-    throw new Error(error.message);
+    throw error;
   }
 
   return {
@@ -26,5 +23,7 @@ const resendConfirmation = async (variables: Variables): Promise<Response> => {
 };
 
 export const useResendConfirmation = createMutation<Response, Variables>({
-  mutationFn: (variables) => resendConfirmation(variables),
+  mutationFn: resendConfirmation,
+  // Auth mutations should not be queued if offline - fail immediately
+  networkMode: 'always',
 });

@@ -1,10 +1,9 @@
 import { createMutation } from 'react-query-kit';
 
-import { supabase } from '@/lib/supabase';
+import { authService } from '@/lib/auth/auth-service';
 
 type Variables = {
   password: string;
-  passwordConfirmation?: string; // Optional for backwards compatibility but not used
 };
 
 type Response = {
@@ -13,38 +12,34 @@ type Response = {
   user?: {
     id: string;
     email: string;
-    user_metadata?: Record<string, unknown>;
   };
 };
 
 const updatePasswordRequest = async (
   variables: Variables,
 ): Promise<Response> => {
-  const { data, error } = await supabase.auth.updateUser({
+  const { data, error } = await authService.updateUser({
     password: variables.password,
   });
 
   if (error) {
-    throw new Error(error.message);
-  }
-
-  if (!data.user) {
-    throw new Error('Password update failed: No user returned');
+    throw error;
   }
 
   return {
     success: true,
     message: 'Password updated successfully',
-    user: {
-      id: data.user.id,
-      email: data.user.email ?? '',
-      user_metadata: data.user.user_metadata,
-    },
+    user: data
+      ? {
+          id: data.userId,
+          email: data.email,
+        }
+      : undefined,
   };
 };
 
 export const useUpdatePassword = createMutation<Response, Variables>({
-  mutationFn: (variables) => updatePasswordRequest(variables),
+  mutationFn: updatePasswordRequest,
   // Auth mutations should not be queued if offline - fail immediately
   networkMode: 'always',
 });

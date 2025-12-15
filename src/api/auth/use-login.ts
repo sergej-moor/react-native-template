@@ -1,6 +1,6 @@
 import { createMutation } from 'react-query-kit';
 
-import { supabase } from '@/lib/supabase';
+import { authService } from '@/lib/auth/auth-service';
 
 type Variables = {
   email: string;
@@ -8,19 +8,18 @@ type Variables = {
 };
 
 const login = async (variables: Variables): Promise<void> => {
-  const { error } = await supabase.auth.signInWithPassword({
+  const { error } = await authService.signInWithPassword({
     email: variables.email,
     password: variables.password,
   });
 
   if (error) {
-    throw new Error(error.message);
+    throw error;
   }
 };
 
 export const useLogin = createMutation<void, Variables>({
   mutationFn: login,
-  // Auth mutations should not be queued if offline.
-  // We want them to fail immediately so the user sees the error.
+  // Auth mutations should not be queued if offline - fail immediately
   networkMode: 'always',
 });

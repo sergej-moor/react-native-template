@@ -2,7 +2,7 @@ import * as Linking from 'expo-linking';
 import { createMutation } from 'react-query-kit';
 
 import { useAuth } from '@/lib';
-import { supabase } from '@/lib/supabase';
+import { authService } from '@/lib/auth/auth-service';
 
 type Variables = {
   email: string;
@@ -12,51 +12,36 @@ type Variables = {
 
 const signUpOrUpdate = async (variables: Variables): Promise<void> => {
   const { user: currentUser } = useAuth.getState();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const isAnonymous = (currentUser as any)?.is_anonymous;
-
-  let result;
+  const isAnonymous = currentUser?.is_anonymous ?? false;
 
   if (isAnonymous) {
-    // Convert Guest -> Registered User
-    // This preserves the User ID and all associated data
-    result = await supabase.auth.updateUser({
+    // Convert Guest -> Registered User (preserves user ID and data)
+    const { error } = await authService.updateUser({
       email: variables.email,
       password: variables.password,
-      data: {
-        name: variables.name,
-      },
+      data: variables.name ? { name: variables.name } : undefined,
     });
+
+    if (error) {
+      throw error;
+    }
   } else {
     // Standard Sign Up (creates new user)
-    result = await supabase.auth.signUp({
+    const { error } = await authService.signUp({
       email: variables.email,
       password: variables.password,
-      options: {
-        emailRedirectTo: Linking.createURL('/'),
-        data: {
-          name: variables.name,
-        },
-      },
+      name: variables.name,
+      emailRedirectTo: Linking.createURL('/'),
     });
-  }
 
-  const {
-    data: { user },
-    error,
-  } = result;
-
-  if (error) {
-    throw new Error(error.message);
-  }
-  if (!user) {
-    throw new Error('Sign up failed: No user returned');
+    if (error) {
+      throw error;
+    }
   }
 };
 
 export const useSignUp = createMutation<void, Variables>({
   mutationFn: signUpOrUpdate,
-  // Auth mutations should not be queued if offline.
-  // We want them to fail immediately so the user sees the error.
+  // Auth mutations should not be queued if offline - fail immediately
   networkMode: 'always',
 });

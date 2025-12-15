@@ -1,25 +1,25 @@
 import { createMutation } from 'react-query-kit';
 
-import { supabase } from '@/lib/supabase';
+import { authService } from '@/lib/auth/auth-service';
 
 export type DeleteUserVariables = {
-  email?: string; // Not used in Supabase delete, but kept for backwards compatibility
+  email?: string; // Not used, kept for backwards compatibility
 };
 
 const deleteUser = async (_variables: DeleteUserVariables): Promise<void> => {
-  // Get current user first
-  const { data: userData, error: userError } = await supabase.auth.getUser();
+  // Verify user is authenticated
+  const { error: userError } = await authService.getUser();
 
-  if (userError || !userData.user) {
-    throw new Error('No authenticated user found');
+  if (userError) {
+    throw userError;
   }
 
-  // Delete the user account
-  const { error } = await supabase.rpc('delete_user'); // This requires a custom RPC function in Supabase
+  // Delete the user account (requires custom RPC function in Supabase)
+  const { error } = await authService.deleteUser();
 
   if (error) {
-    // Fallback: Sign out the user if delete function is not available
-    await supabase.auth.signOut();
+    // Fallback: Sign out if delete function is not available
+    await authService.signOut();
     throw new Error(
       'Account deletion requested. Please contact support to complete the process.',
     );
@@ -28,4 +28,6 @@ const deleteUser = async (_variables: DeleteUserVariables): Promise<void> => {
 
 export const useDeleteUser = createMutation<void, DeleteUserVariables>({
   mutationFn: deleteUser,
+  // Auth mutations should not be queued if offline - fail immediately
+  networkMode: 'always',
 });

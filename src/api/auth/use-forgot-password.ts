@@ -1,7 +1,7 @@
 import { Env } from '@env';
 import { createMutation } from 'react-query-kit';
 
-import { supabase } from '@/lib/supabase';
+import { authService } from '@/lib/auth/auth-service';
 
 type Variables = {
   email: string;
@@ -14,12 +14,13 @@ type Response = {
 const sendForgotPasswordInstructions = async (
   variables: Variables,
 ): Promise<Response> => {
-  const { error } = await supabase.auth.resetPasswordForEmail(variables.email, {
+  const { error } = await authService.resetPasswordForEmail({
+    email: variables.email,
     redirectTo: `${Env.WEBSITE_URL}/update-password`,
   });
 
   if (error) {
-    throw new Error(error.message);
+    throw error;
   }
 
   return {
@@ -28,7 +29,7 @@ const sendForgotPasswordInstructions = async (
 };
 
 export const useForgotPassword = createMutation<Response, Variables>({
-  mutationFn: (variables) => sendForgotPasswordInstructions(variables),
+  mutationFn: sendForgotPasswordInstructions,
   // Auth mutations should not be queued if offline - fail immediately
   networkMode: 'always',
 });
