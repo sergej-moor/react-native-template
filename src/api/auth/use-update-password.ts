@@ -37,7 +37,7 @@ const updatePasswordRequest = async (
     message: 'Password updated successfully',
     user: {
       id: data.user.id,
-      email: data.user.email!,
+      email: data.user.email ?? '',
       user_metadata: data.user.user_metadata,
     },
   };
@@ -45,4 +45,6 @@ const updatePasswordRequest = async (
 
 export const useUpdatePassword = createMutation<Response, Variables>({
   mutationFn: (variables) => updatePasswordRequest(variables),
+  // Auth mutations should not be queued if offline - fail immediately
+  networkMode: 'always',
 });
