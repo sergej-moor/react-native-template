@@ -61,20 +61,20 @@ if (error) {
 
 ### Available Methods
 
-| Method | Description |
-|--------|-------------|
-| `signInWithPassword` | Email/password login |
-| `signUp` | Create new account |
-| `updateUser` | Update credentials or metadata |
-| `signInAnonymously` | Guest login |
-| `getSession` | Get current session |
-| `setSession` | Set session from tokens (deep links) |
-| `signOut` | Sign out user |
-| `resetPasswordForEmail` | Send password reset email |
-| `resendConfirmation` | Resend email verification |
-| `getUser` | Get current user |
-| `deleteUser` | Delete account (requires RPC) |
-| `onAuthStateChange` | Subscribe to auth changes |
+| Method                  | Description                          |
+| ----------------------- | ------------------------------------ |
+| `signInWithPassword`    | Email/password login                 |
+| `signUp`                | Create new account                   |
+| `updateUser`            | Update credentials or metadata       |
+| `signInAnonymously`     | Guest login                          |
+| `getSession`            | Get current session                  |
+| `setSession`            | Set session from tokens (deep links) |
+| `signOut`               | Sign out user                        |
+| `resetPasswordForEmail` | Send password reset email            |
+| `resendConfirmation`    | Resend email verification            |
+| `getUser`               | Get current user                     |
+| `deleteUser`            | Delete account (requires RPC)        |
+| `onAuthStateChange`     | Subscribe to auth changes            |
 
 This abstraction makes testing easy - you can mock `authService` instead of the Supabase client:
 
@@ -94,12 +94,12 @@ The auth store (`src/lib/auth/index.tsx`) manages global auth state using Zustan
 
 ### State
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `session` | `Session \| null` | Current Supabase session |
-| `user` | `User \| null` | Current user object |
-| `isAnonymous` | `boolean` | Whether user is a guest |
-| `status` | `'idle' \| 'signIn' \| 'signOut'` | Auth status |
+| Property      | Type                              | Description              |
+| ------------- | --------------------------------- | ------------------------ |
+| `session`     | `Session \| null`                 | Current Supabase session |
+| `user`        | `User \| null`                    | Current user object      |
+| `isAnonymous` | `boolean`                         | Whether user is a guest  |
+| `status`      | `'idle' \| 'signIn' \| 'signOut'` | Auth status              |
 
 ### Exported Functions
 
@@ -169,7 +169,7 @@ export const hydrateAuth = async (): Promise<void> => {
 
   // No session - create anonymous session
   const { data: anonData, error } = await authService.signInAnonymously();
-  
+
   if (!error && anonData?.session) {
     _useAuth.getState().setSession(anonData.session);
   }
@@ -231,6 +231,7 @@ export function parseTokensFromHash(url: string): AuthTokens | null {
 ```
 
 When a user clicks a link in their email:
+
 1. App receives the deep link with tokens
 2. Tokens are parsed from the URL hash or query params
 3. Session is set via `authService.setSession()`
@@ -242,14 +243,14 @@ The starter includes professionally designed email templates for all Supabase au
 
 ### Available Templates
 
-| Template | Purpose |
-|----------|---------|
-| `confirm-signup.html` | New user email verification |
-| `reset-password.html` | Password reset link |
-| `change-email.html` | Email change confirmation |
-| `magic-link.html` | Passwordless sign-in |
-| `invite-user.html` | Team invitations |
-| `reauthentication.html` | OTP verification code |
+| Template                | Purpose                     |
+| ----------------------- | --------------------------- |
+| `confirm-signup.html`   | New user email verification |
+| `reset-password.html`   | Password reset link         |
+| `change-email.html`     | Email change confirmation   |
+| `magic-link.html`       | Passwordless sign-in        |
+| `invite-user.html`      | Team invitations            |
+| `reauthentication.html` | OTP verification code       |
 
 ### Customization
 
@@ -334,14 +335,14 @@ The `useDeleteUser` hook calls this function. If the RPC is not available, it fa
 
 All auth operations are exposed as React Query mutations in `src/api/auth/`:
 
-| Hook | File | Purpose |
-|------|------|---------|
-| `useLogin` | `use-login.ts` | Sign in with email/password |
-| `useSignUp` | `use-sign-up.ts` | Register or convert guest |
-| `useForgotPassword` | `use-forgot-password.ts` | Send reset email |
-| `useUpdatePassword` | `use-update-password.ts` | Change password |
-| `useDeleteUser` | `use-delete-user.ts` | Delete account |
-| `useResendConfirmation` | `use-resend-confirmation.ts` | Resend verification email |
+| Hook                    | File                         | Purpose                     |
+| ----------------------- | ---------------------------- | --------------------------- |
+| `useLogin`              | `use-login.ts`               | Sign in with email/password |
+| `useSignUp`             | `use-sign-up.ts`             | Register or convert guest   |
+| `useForgotPassword`     | `use-forgot-password.ts`     | Send reset email            |
+| `useUpdatePassword`     | `use-update-password.ts`     | Change password             |
+| `useDeleteUser`         | `use-delete-user.ts`         | Delete account              |
+| `useResendConfirmation` | `use-resend-confirmation.ts` | Resend verification email   |
 
 All auth mutations use `networkMode: 'always'` to fail immediately when offline instead of being queued.
 
