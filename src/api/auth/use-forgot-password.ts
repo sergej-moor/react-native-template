@@ -29,4 +29,6 @@ const sendForgotPasswordInstructions = async (
 
 export const useForgotPassword = createMutation<Response, Variables>({
   mutationFn: (variables) => sendForgotPasswordInstructions(variables),
+  // Auth mutations should not be queued if offline - fail immediately
+  networkMode: 'always',
 });
