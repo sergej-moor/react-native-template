@@ -2,8 +2,8 @@ import { type Session, type User } from '@supabase/supabase-js';
 import { create } from 'zustand';
 
 import { storage } from '../storage';
-import { supabase } from '../supabase';
 import { createSelectors } from '../utils';
+import { authService } from './auth-service';
 
 interface AuthState {
   session: Session | null;
@@ -20,9 +20,7 @@ const _useAuth = create<AuthState>((set) => ({
   isAnonymous: false,
   setSession: (session) => {
     const user = session?.user ?? null;
-    // Supabase users have an 'is_anonymous' flag
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const isAnonymous = (user as any)?.is_anonymous ?? false;
+    const isAnonymous = user?.is_anonymous ?? false;
     set({
       status: session ? 'signIn' : 'signOut',
       session,
@@ -34,59 +32,50 @@ const _useAuth = create<AuthState>((set) => ({
 
 export const useAuth = createSelectors(_useAuth);
 
-// Listener for Auth State Changes
-// This keeps the Zustand store in sync with Supabase's internal state
-supabase.auth.onAuthStateChange((_event, session) => {
+// Listener for Auth State Changes - keeps Zustand store in sync with Supabase
+authService.onAuthStateChange((session) => {
   _useAuth.getState().setSession(session);
 });
 
-// Helper to sign out and reset app state
-export const signOut = async () => {
+/**
+ * Signs out the user and resets app state.
+ * After sign out, user will be redirected to onboarding.
+ */
+export const signOut = async (): Promise<void> => {
   try {
-    // 1. Sign out from Supabase (clears session)
-    await supabase.auth.signOut();
+    await authService.signOut();
   } catch (error) {
     console.error('Error signing out:', error);
   } finally {
-    // 2. Reset "First Time" flag so user sees Onboarding again
-    // We must manually set this because we are outside a React component
+    // Reset "First Time" flag so user sees Onboarding again
     storage.set('IS_FIRST_TIME', true);
   }
-
-  // 3. We DO NOT sign in anonymously here.
-  // The router will see 'isFirstTime' is true and redirect to /onboarding.
-  // The user will click "Get Started" -> which sets isFirstTime=false -> redirects to /.
-  // Then hydrateAuth (or a listener) will kick in and create a new anonymous session.
 };
 
-// Helper to initialize auth check (usually called in _layout.tsx)
-export const hydrateAuth = async () => {
-  // 1. Try to get the existing session
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+/**
+ * Initializes auth state on app launch.
+ * Attempts to restore existing session or create anonymous session.
+ */
+export const hydrateAuth = async (): Promise<void> => {
+  // Try to get existing session
+  const { data: sessionData } = await authService.getSession();
 
-  // 2. If session exists, sync to store and we are good
-  if (session) {
-    _useAuth.getState().setSession(session);
+  if (sessionData?.session) {
+    _useAuth.getState().setSession(sessionData.session);
     return;
   }
 
-  // 3. If NO session, try to sign in anonymously (Soft Login)
+  // No session - try anonymous sign in (soft login)
   const { data: anonData, error: anonError } =
-    await supabase.auth.signInAnonymously();
+    await authService.signInAnonymously();
 
   if (anonError) {
-    // If anonymous login fails (e.g., network error, or not enabled in dashboard),
-    // we fall back to 'signOut' state so the user at least sees the login screen
-    // or stays on the splash screen depending on logic.
-    // Setting session to null triggers 'signOut' status.
+    // Anonymous login failed - fall back to signOut state
     _useAuth.getState().setSession(null);
     return;
   }
 
-  // 4. If anonymous login succeeded, set the new anonymous session
-  if (anonData.session) {
+  if (anonData?.session) {
     _useAuth.getState().setSession(anonData.session);
   }
 };
