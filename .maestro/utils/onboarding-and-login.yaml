@@ -4,9 +4,15 @@ tags:
 ---
 - runFlow:
     when:
-      visible: "Obytes Starter"
+      visible: 'React Native Template'
     file: onboarding.yaml
+# After onboarding, tap "I have an account" to go to sign-in
 - runFlow:
     when:
-      visible: Sign In
+      visible: 'I have an account'
+    commands:
+      - tapOn: 'I have an account'
+- runFlow:
+    when:
+      visible: 'Sign In'
     file: login.yaml

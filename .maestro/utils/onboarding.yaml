@@ -2,7 +2,9 @@ appId: ${APP_ID}
 tags:
   - util
 ---
-- assertVisible: 'Obytes Starter'
-- assertVisible: "Let's Get Started "
-- tapOn: "Let's Get Started "
-- assertVisible: 'Sign In'
+# Multi-step onboarding flow
+- assertVisible: 'React Native Template'
+- tapOn: 'Next'
+- assertVisible: 'Build Faster'
+- tapOn: 'Next'
+- assertVisible: 'Start Your Journey'

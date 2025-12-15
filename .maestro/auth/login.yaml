@@ -2,10 +2,22 @@ appId: ${APP_ID}
 env:
   EMAIL: 'user@test.com'
   PASSWORD: 'Password123?'
-tags:
-  - util
 ---
-# Login utility - assumes we're on the sign-in screen
+# Simple login test - goes through onboarding and logs in
+- clearState
+- launchApp
+
+# Complete onboarding
+- runFlow:
+    when:
+      visible: 'React Native Template'
+    file: ../utils/onboarding.yaml
+
+# Navigate to sign-in
+- tapOn: 'I have an account'
+- assertVisible: 'Sign In'
+
+# Fill login form
 - tapOn:
     id: 'email-input'
 - inputText: ${EMAIL}
@@ -14,6 +26,9 @@ tags:
     id: 'password-input'
 - inputText: ${PASSWORD}
 - runFlow: ../utils/hide-keyboard.yaml
+
+# Submit and verify
 - tapOn:
     id: 'login-button'
 - assertVisible: 'Feed'
+

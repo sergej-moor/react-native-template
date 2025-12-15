@@ -1,35 +1,61 @@
 appId: ${APP_ID}
 env:
-  Name: 'User'
   EMAIL: 'user@test.com'
-  PASSWORD: 'password'
+  PASSWORD: 'Password123?'
 ---
 - launchApp
 - runFlow:
     when:
-      visible: 'Obytes Starter'
+      visible: 'React Native Template'
     file: ../utils/onboarding.yaml
+
+# Navigate to sign-in from onboarding final step
+- tapOn: 'I have an account'
 - assertVisible: 'Sign In'
+
+# Test validation - submit empty form
 - assertVisible:
     id: 'login-button'
 - tapOn:
     id: 'login-button'
 - assertVisible: 'Email is required'
 - assertVisible: 'Password is required'
-- tapOn:
-    id: 'name'
-- inputText: ${Name}
-- runFlow: ../utils/hide-keyboard.yaml
+
+# Test invalid email format
 - tapOn:
     id: 'email-input'
-- inputText: 'email'
-- assertVisible: 'Invalid email format'
-- inputText: ${EMAIL}
-- runFlow: ../utils/hide-keyboard.yaml
-- tapOn:
-    id: 'password-input'
-- inputText: ${PASSWORD}
+- inputText: 'invalid-email'
 - runFlow: ../utils/hide-keyboard.yaml
 - tapOn:
     id: 'login-button'
+- assertVisible: 'Invalid email format'
+
+# Clear and enter valid email
+- tapOn:
+    id: 'email-input'
+- eraseText: 20
+- inputText: ${EMAIL}
+- runFlow: ../utils/hide-keyboard.yaml
+
+# Test short password validation
+- tapOn:
+    id: 'password-input'
+- inputText: '123'
+- runFlow: ../utils/hide-keyboard.yaml
+- tapOn:
+    id: 'login-button'
+- assertVisible: 'Password must be at least 6 characters'
+
+# Clear and enter valid password
+- tapOn:
+    id: 'password-input'
+- eraseText: 10
+- inputText: ${PASSWORD}
+- runFlow: ../utils/hide-keyboard.yaml
+
+# Submit valid login
+- tapOn:
+    id: 'login-button'
+
+# Verify successful login - should see the Feed screen
 - assertVisible: 'Feed'

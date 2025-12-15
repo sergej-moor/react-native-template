@@ -2,7 +2,19 @@ appId: ${APP_ID}
 ---
 - clearState
 - launchApp
-- assertVisible: "Obytes Starter"
-- assertVisible: "Let's Get Started "
-- tapOn: "Let's Get Started "
-- assertVisible: "Sign In"
+
+# Step 1: Welcome screen
+- assertVisible: 'React Native Template'
+- assertVisible: 'The right way to build your mobile app'
+- tapOn: 'Next'
+
+# Step 2: Build Faster
+- assertVisible: 'Build Faster'
+- assertVisible: 'Focus on your product'
+- tapOn: 'Next'
+
+# Step 3: Auth Choice
+- assertVisible: 'Start Your Journey'
+- assertVisible: 'Create Account'
+- assertVisible: 'I have an account'
+- assertVisible: 'Maybe Later'
