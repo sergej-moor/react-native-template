@@ -5,7 +5,6 @@ import { supabase } from '@/lib/supabase';
 type Variables = {
   email: string;
   password: string;
-  name?: string;
 };
 
 const login = async (variables: Variables): Promise<void> => {
