@@ -14,7 +14,13 @@ import { KeyboardProvider } from 'react-native-keyboard-controller';
 
 import { APIProvider } from '@/api';
 import interceptors from '@/api/common/interceptors';
-import { hydrateAuth, loadSelectedTheme, useAuth, useIsFirstTime } from '@/lib';
+import {
+  hydrateAuth,
+  loadSelectedTheme,
+  useAuth,
+  useAuthDeepLink,
+  useIsFirstTime,
+} from '@/lib';
 import { useThemeConfig } from '@/lib/use-theme-config';
 
 export { ErrorBoundary } from 'expo-router';
@@ -136,6 +142,7 @@ function RouterContent() {
 
 function Providers({ children }: Readonly<{ children: React.ReactNode }>) {
   const theme = useThemeConfig();
+  useAuthDeepLink();
 
   return (
     <GestureHandlerRootView

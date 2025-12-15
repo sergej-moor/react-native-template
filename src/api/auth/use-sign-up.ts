@@ -1,3 +1,4 @@
+import * as Linking from 'expo-linking';
 import { createMutation } from 'react-query-kit';
 
 import { useAuth } from '@/lib';
@@ -32,6 +33,7 @@ const signUpOrUpdate = async (variables: Variables): Promise<void> => {
       email: variables.email,
       password: variables.password,
       options: {
+        emailRedirectTo: Linking.createURL('/'),
         data: {
           name: variables.name,
         },

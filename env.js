@@ -86,7 +86,7 @@ const PACKAGE = 'com.rootstrap'; // android package name
 const NAME = 'RootstrapApp'; // app name
 const EXPO_ACCOUNT_OWNER = 'rsdevs'; // expo account owner
 const EAS_PROJECT_ID = '72fdf440-59f1-493d-96e3-4afad8d7a045'; // eas project id
-const SCHEME = 'RootstrapApp'; // app scheme
+const SCHEME = 'startuptemplate'; // app scheme
 
 /**
  * We declare a function withEnvSuffix that will add a suffix to the variable name based on the APP_ENV
