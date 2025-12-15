@@ -8,7 +8,7 @@ import { useResendConfirmation } from '@/api/auth/use-resend-confirmation';
 import { useTodos } from '@/api/todos';
 import { LoginForm, type LoginFormProps } from '@/components/login-form';
 import { FocusAwareStatusBar } from '@/components/ui';
-import { useAuth, useIsFirstTime } from '@/lib';
+import { checkNetworkConnection, useAuth, useIsFirstTime } from '@/lib';
 
 export default function Login() {
   const router = useRouter();
@@ -76,7 +76,12 @@ export default function Login() {
     },
   });
 
-  const onSubmit: LoginFormProps['onSubmit'] = (data) => {
+  const onSubmit: LoginFormProps['onSubmit'] = async (data) => {
+    const isConnected = await checkNetworkConnection();
+    if (!isConnected) {
+      return;
+    }
+
     const hasTodos = todos && todos.length > 0;
 
     if (isAnonymous && hasTodos) {

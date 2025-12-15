@@ -1,8 +1,25 @@
-import { Linking } from 'react-native';
+import NetInfo from '@react-native-community/netinfo';
+import { Alert, Linking } from 'react-native';
 import type { StoreApi, UseBoundStore } from 'zustand';
 
 export function openLinkInBrowser(url: string) {
   Linking.canOpenURL(url).then((canOpen) => canOpen && Linking.openURL(url));
+}
+
+/**
+ * Checks network connectivity and shows an alert if offline.
+ * @returns true if connected, false if offline
+ */
+export async function checkNetworkConnection(): Promise<boolean> {
+  const state = await NetInfo.fetch();
+  if (!state.isConnected) {
+    Alert.alert(
+      'No Internet Connection',
+      'Please connect to the internet and try again.',
+    );
+    return false;
+  }
+  return true;
 }
 
 type WithSelectors<S> = S extends { getState: () => infer T }

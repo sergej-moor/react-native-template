@@ -6,6 +6,7 @@ import { useSignUp } from '@/api/auth/use-sign-up';
 import type { SignUpFormProps } from '@/components/sign-up-form';
 import { SignUpForm } from '@/components/sign-up-form';
 import { FocusAwareStatusBar } from '@/components/ui';
+import { checkNetworkConnection } from '@/lib';
 
 export default function SignUp() {
   const router = useRouter();
@@ -22,7 +23,12 @@ export default function SignUp() {
     onError: (error) => showMessage({ message: error.message, type: 'danger' }),
   });
 
-  const onSubmit: SignUpFormProps['onSubmit'] = (data) => {
+  const onSubmit: SignUpFormProps['onSubmit'] = async (data) => {
+    const isConnected = await checkNetworkConnection();
+    if (!isConnected) {
+      return;
+    }
+
     signUp(data);
   };
 
