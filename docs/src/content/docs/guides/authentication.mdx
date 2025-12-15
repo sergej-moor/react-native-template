@@ -8,115 +8,349 @@ head:
 
 import CodeBlock from '../../../components/code.astro';
 
-Most applications require some form of authentication, and a poorly designed approach can lead to significant issues. This starter kit provides a solid foundation for implementing authentication in your application using Supabase, including support for soft login (anonymous guest access), account linking, and secure token storage.
+Most applications require some form of authentication, and a poorly designed approach can lead to significant issues. This starter kit provides a solid foundation for implementing authentication using Supabase, including support for soft login (anonymous guest access), account linking, secure token storage, and email verification.
 
-We use [Zustand](https://github.com/pmndrs/zustand) to globally manage the application's authentication state, mirroring the Supabase session status in real-time.
+We use [Zustand](https://github.com/pmndrs/zustand) for global auth state management and a dedicated **Auth Service** layer that wraps Supabase for better testability.
+
+## Architecture Overview
+
+The auth system is organized into three layers:
+
+```
+┌─────────────────────────────────────────────────────┐
+│  UI Layer (Screens & Hooks)                         │
+│  src/app/sign-in.tsx, src/app/sign-up.tsx, etc.     │
+└─────────────────────────────────────────────────────┘
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────┐
+│  API Layer (React Query Mutations)                  │
+│  src/api/auth/use-login.ts, use-sign-up.ts, etc.    │
+└─────────────────────────────────────────────────────┘
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────┐
+│  Auth Service Layer                                 │
+│  src/lib/auth/auth-service.ts                       │
+│  └── Wraps Supabase with consistent API             │
+└─────────────────────────────────────────────────────┘
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────┐
+│  Auth State (Zustand Store)                         │
+│  src/lib/auth/index.tsx                             │
+│  └── session, user, isAnonymous, status             │
+└─────────────────────────────────────────────────────┘
+```
+
+## Auth Service
+
+The auth service (`src/lib/auth/auth-service.ts`) provides a testable abstraction over Supabase auth. All methods return a consistent `{ data, error }` shape:
+
+```typescript
+// Example: Sign in with email/password
+const { error } = await authService.signInWithPassword({
+  email: 'user@example.com',
+  password: 'password123',
+});
+
+if (error) {
+  console.error('Login failed:', error.message);
+}
+```
+
+### Available Methods
+
+| Method | Description |
+|--------|-------------|
+| `signInWithPassword` | Email/password login |
+| `signUp` | Create new account |
+| `updateUser` | Update credentials or metadata |
+| `signInAnonymously` | Guest login |
+| `getSession` | Get current session |
+| `setSession` | Set session from tokens (deep links) |
+| `signOut` | Sign out user |
+| `resetPasswordForEmail` | Send password reset email |
+| `resendConfirmation` | Resend email verification |
+| `getUser` | Get current user |
+| `deleteUser` | Delete account (requires RPC) |
+| `onAuthStateChange` | Subscribe to auth changes |
+
+This abstraction makes testing easy - you can mock `authService` instead of the Supabase client:
+
+```typescript
+jest.mock('@/lib/auth/auth-service', () => ({
+  authService: {
+    signInWithPassword: jest.fn().mockResolvedValue({ error: null }),
+  },
+}));
+```
 
 ## Authentication Store
 
-The authentication store, located at `src/lib/auth/index.tsx`, is the central hub for managing the app's authentication state. It listens to Supabase's `onAuthStateChange` event, ensuring that your UI is always in sync with the backend.
+The auth store (`src/lib/auth/index.tsx`) manages global auth state using Zustand:
 
 <CodeBlock file="src/lib/auth/index.tsx" />
 
-The store is composed of the following states and actions:
+### State
 
--   **States**:
-    -   `session`: The user's session object from Supabase.
-    -   `user`: The user object from Supabase.
-    -   `status`: The authentication status (`idle`, `signIn`, `signOut`).
-    -   `isAnonymous`: A boolean flag indicating if the current user is a guest (anonymous).
+| Property | Type | Description |
+|----------|------|-------------|
+| `session` | `Session \| null` | Current Supabase session |
+| `user` | `User \| null` | Current user object |
+| `isAnonymous` | `boolean` | Whether user is a guest |
+| `status` | `'idle' \| 'signIn' \| 'signOut'` | Auth status |
 
--   **Actions**:
-    -   `signIn`: (Deprecated for direct use) Internal action to update state.
-    -   `signOut`: Signs out the user from Supabase and resets the app state (including the "First Time" flag), effectively redirecting them to the onboarding flow.
-    -   `hydrate`: Initializes the auth state. If no session exists, it automatically creates an anonymous session (Soft Login).
+### Exported Functions
+
+- **`signOut()`** - Signs out and resets the app to onboarding
+- **`hydrateAuth()`** - Initializes auth on app launch (restores session or creates anonymous session)
+
+### Usage in Components
+
+```typescript
+import { useAuth, signOut } from '@/lib';
+
+function ProfileScreen() {
+  const user = useAuth.use.user();
+  const isAnonymous = useAuth.use.isAnonymous();
+  const status = useAuth.use.status();
+
+  if (isAnonymous) {
+    return <GuestPrompt />;
+  }
+
+  return <UserProfile user={user} onLogout={signOut} />;
+}
+```
 
 ## Secure Storage
 
-We use `expo-secure-store` via a custom adapter (`src/lib/auth/secure-storage.ts`) to persist Supabase sessions securely. This is critical for security, as standard `AsyncStorage` or `MMKV` are not encrypted.
+Sessions are persisted using encrypted MMKV storage with a key stored in `expo-secure-store`:
 
 ```typescript
-// src/lib/auth/secure-storage.ts
-import * as SecureStore from 'expo-secure-store';
-
-export const SupabaseStorage = {
-  getItem: (key: string) => {
-    return SecureStore.getItemAsync(key);
-  },
-  setItem: (key: string, value: string) => {
-    SecureStore.setItemAsync(key, value);
-  },
-  removeItem: (key: string) => {
-    SecureStore.deleteItemAsync(key);
-  },
+// src/lib/auth/storage-adapter.ts
+const getEncryptionKey = () => {
+  let key = SecureStore.getItem(STORE_KEY);
+  if (!key) {
+    key = Crypto.randomUUID();
+    SecureStore.setItem(STORE_KEY, key);
+  }
+  return key;
 };
+
+export const storage = new MMKV({
+  id: 'supabase-auth',
+  encryptionKey: getEncryptionKey(),
+});
 ```
+
+This ensures tokens are encrypted at rest, unlike standard `AsyncStorage`.
 
 ## Soft Login (Anonymous Auth)
 
-The app is designed with a "Soft Login" flow. When a user first opens the app, they are automatically signed in as an anonymous user. This allows them to explore the app and create content (like Todos) without immediately hitting a registration wall.
+The app supports a "Soft Login" flow where first-time users automatically get an anonymous session:
 
--   **Flow**:
-    1.  App launches.
-    2.  `hydrateAuth` checks for a session.
-    3.  If none, calls `supabase.auth.signInAnonymously()`.
-    4.  User is logged in as a guest (`isAnonymous: true`).
+1. App launches → `hydrateAuth()` is called
+2. If no existing session → `signInAnonymously()` creates a guest session
+3. User can explore the app with `isAnonymous: true`
+4. Guest data (like Todos) is preserved until they sign up
+
+```typescript
+// From src/lib/auth/index.tsx
+export const hydrateAuth = async (): Promise<void> => {
+  const { data: sessionData } = await authService.getSession();
+
+  if (sessionData?.session) {
+    // Restore existing session
+    _useAuth.getState().setSession(sessionData.session);
+    return;
+  }
+
+  // No session - create anonymous session
+  const { data: anonData, error } = await authService.signInAnonymously();
+  
+  if (!error && anonData?.session) {
+    _useAuth.getState().setSession(anonData.session);
+  }
+};
+```
 
 ## Guest Conversion (Account Linking)
 
-When a guest user decides to sign up (e.g., to sync their data or access premium features), we **convert** their anonymous account to a registered account. This preserves their `user_id` and all associated data (like Todos).
-
-We handle this in `src/api/auth/use-sign-up.ts`:
+When a guest signs up, we **convert** their anonymous account to a registered account, preserving their `user_id` and all associated data:
 
 ```typescript
+// From src/api/auth/use-sign-up.ts
 const signUpOrUpdate = async (variables: Variables): Promise<void> => {
   const { user: currentUser } = useAuth.getState();
-  const isAnonymous = currentUser?.is_anonymous;
+  const isAnonymous = currentUser?.is_anonymous ?? false;
 
   if (isAnonymous) {
-    // Convert Guest -> Registered User
-    await supabase.auth.updateUser({
+    // Convert Guest -> Registered User (preserves user ID and data)
+    await authService.updateUser({
       email: variables.email,
       password: variables.password,
-      data: { name: variables.name },
+      data: variables.name ? { name: variables.name } : undefined,
     });
   } else {
-    // Standard Sign Up
-    await supabase.auth.signUp({
+    // Standard Sign Up (creates new user)
+    await authService.signUp({
       email: variables.email,
       password: variables.password,
-      // ...
+      name: variables.name,
+      emailRedirectTo: Linking.createURL('/'),
     });
   }
 };
 ```
 
-## Guarding Routes
+## Deep Link Handling
 
-We use `expo-router` for navigation. The root layout (`src/app/_layout.tsx`) handles global modals (like Sign In/Sign Up), while the app logic (`src/app/(app)/_layout.tsx`) allows access to all routes for both Guests and Registered users.
+The app handles auth callbacks from email links (verification, password reset) via the `useAuthDeepLink` hook:
 
-Specific actions (like "Delete Account") are conditionally hidden or disabled for Guest users in the UI.
+```typescript
+// From src/lib/hooks/use-auth-deep-link.ts
+export function parseTokensFromHash(url: string): AuthTokens | null {
+  const hashIndex = url.indexOf('#');
+  if (hashIndex === -1) return null;
+
+  const hash = url.substring(hashIndex + 1);
+  const params = new URLSearchParams(hash);
+  const accessToken = params.get('access_token');
+  const refreshToken = params.get('refresh_token');
+
+  if (!accessToken || !refreshToken) return null;
+
+  return {
+    accessToken,
+    refreshToken,
+    type: params.get('type'), // 'recovery', 'signup', etc.
+  };
+}
+```
+
+When a user clicks a link in their email:
+1. App receives the deep link with tokens
+2. Tokens are parsed from the URL hash or query params
+3. Session is set via `authService.setSession()`
+4. User is redirected to `/update-password` (for recovery) or `/` (for verification)
+
+## Email Templates
+
+The starter includes professionally designed email templates for all Supabase auth flows. These are located in the `/email-templates` directory.
+
+### Available Templates
+
+| Template | Purpose |
+|----------|---------|
+| `confirm-signup.html` | New user email verification |
+| `reset-password.html` | Password reset link |
+| `change-email.html` | Email change confirmation |
+| `magic-link.html` | Passwordless sign-in |
+| `invite-user.html` | Team invitations |
+| `reauthentication.html` | OTP verification code |
+
+### Customization
+
+Edit `email-templates/config.js` to customize colors, typography, and branding:
+
+```javascript
+module.exports = {
+  colors: {
+    primary: '#6366f1',
+    background: '#f8fafc',
+    // ...
+  },
+  button: {
+    borderRadius: '8px',
+    padding: '12px 24px',
+  },
+  // ...
+};
+```
+
+Then regenerate templates:
+
+```bash
+cd email-templates
+node build.js
+```
+
+### Deploying to Supabase
+
+1. Go to your Supabase project → **Authentication** → **Email Templates**
+2. Select a template type (e.g., "Confirm signup")
+3. Copy the contents from the corresponding `/dist` file
+4. Paste and save
+
+The templates include dark mode support and are mobile-responsive.
+
+## Route Protection
+
+Routes are protected via the root layout (`src/app/_layout.tsx`):
+
+- **First-time users** → Redirected to `/onboarding`
+- **All users (guest + registered)** → Can access `/(app)` routes
+- **Specific actions** (like Delete Account) are conditionally shown based on `isAnonymous`
+
+```typescript
+// From src/app/_layout.tsx
+function GuardedStack() {
+  const status = useAuth.use.status();
+  const [isFirstTime] = useIsFirstTime();
+
+  React.useEffect(() => {
+    if (isFirstTime && inAuthGroup) {
+      router.replace('/onboarding');
+    }
+  }, [isFirstTime, segments, router]);
+
+  // ...
+}
+```
 
 ## Deleting a User Account
 
-To allow users to delete their own accounts, you need to create a custom RPC function in Supabase.
+To allow users to delete their own accounts, create a custom RPC function in Supabase:
 
-1.  **Create the function** in Supabase SQL Editor:
+```sql
+-- Create the function
+create or replace function public.delete_user()
+returns void
+language sql
+security definer
+as $$
+  delete from auth.users where id = auth.uid();
+$$;
 
-    ```sql
-    create or replace function public.delete_user()
-    returns void
-    language sql
-    security definer
-    as $$
-      delete from auth.users where id = auth.uid();
-    $$;
-    ```
+-- Grant permission
+grant execute on function public.delete_user() to authenticated;
+```
 
-2.  **Grant permission**:
+The `useDeleteUser` hook calls this function. If the RPC is not available, it falls back to signing out the user.
 
-    ```sql
-    grant execute on function public.delete_user() to authenticated;
-    ```
+## API Hooks
 
-The `useDeleteUser` hook (`src/api/auth/use-delete-user.ts`) calls this function. When a user deletes their account, we also reset the local "First Time" state (`IS_FIRST_TIME`), redirecting them back to the onboarding screens.
+All auth operations are exposed as React Query mutations in `src/api/auth/`:
+
+| Hook | File | Purpose |
+|------|------|---------|
+| `useLogin` | `use-login.ts` | Sign in with email/password |
+| `useSignUp` | `use-sign-up.ts` | Register or convert guest |
+| `useForgotPassword` | `use-forgot-password.ts` | Send reset email |
+| `useUpdatePassword` | `use-update-password.ts` | Change password |
+| `useDeleteUser` | `use-delete-user.ts` | Delete account |
+| `useResendConfirmation` | `use-resend-confirmation.ts` | Resend verification email |
+
+All auth mutations use `networkMode: 'always'` to fail immediately when offline instead of being queued.
+
+## Testing
+
+The auth system is designed for testability:
+
+1. **Auth Service** - Mock `authService` methods to test mutations
+2. **Auth Store** - Test state transitions with mock sessions
+3. **Deep Link Utils** - Pure functions (`parseTokensFromHash`, `parseTokensFromQuery`) are exported for unit testing
+
+See `src/lib/auth/auth-service.test.ts` and `src/lib/auth/index.test.tsx` for examples.
