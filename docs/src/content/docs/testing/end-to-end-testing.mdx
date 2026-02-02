@@ -19,6 +19,38 @@ Watch this talk by the amazing Henry Moulton for more details about Maestro and 
 
 :::
 
+## Prerequisites
+
+Before running E2E tests with Maestro, you need to ensure the following:
+
+### Android Setup
+
+For Android testing, you need:
+
+1. **Android Debug Bridge (ADB)** - Maestro requires ADB to connect to Android devices/emulators.
+
+   - **Windows**: Download [Android SDK Platform Tools](https://developer.android.com/tools/releases/platform-tools) and extract it. Add the `platform-tools` directory to your system PATH.
+   - **macOS/Linux**: Install via package manager or download from [Android SDK Platform Tools](https://developer.android.com/tools/releases/platform-tools).
+
+   Verify installation by running:
+
+   ```bash
+   adb version
+   ```
+
+2. **Android Emulator or Physical Device**
+
+   - Start an Android emulator from Android Studio, or
+   - Connect a physical Android device with USB debugging enabled
+
+   Verify device connection:
+
+   ```bash
+   adb devices
+   ```
+
+   This should list your connected device(s). If you see "0 devices connected", ensure your emulator is running or your physical device is connected and USB debugging is enabled.
+
 ## Installing Maestro
 
 To install Maestro, run the following :
@@ -48,8 +80,7 @@ This will run the tests on the local emulator and here is a recording of the tes
 <video controls>
   <source
     src="https://github.com/obytes/react-native-template-obytes/assets/11137944/3b45de00-a369-436a-8faf-6ea1edbb44c3"
-    type="video/mp4"
-  ></source>
+    type="video/mp4"></source>
 </video>
 
 ## Running tests on CI
