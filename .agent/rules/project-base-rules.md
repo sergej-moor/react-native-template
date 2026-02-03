@@ -1,0 +1,49 @@
+---
+trigger: always_on
+---
+
+# Project Base Rules
+
+- use pnpm instead of npm
+
+## Structure
+
+- Organize files as:
+  - src/api (axios, react query)
+  - src/app (expo router, screens, navigation)
+  - src/components (shared components, ui)
+  - src/lib (auth, env, hooks, i18n, utils)
+  - src/translations
+  - src/types
+
+## Imports
+
+- Use absolute imports (@/...)
+
+## Error Handling
+
+- Log errors for debugging.
+- Provide user-friendly error messages.
+
+## Documentation
+
+- Maintain clear README with the following sections:
+  - Setup ( how to install and run the project )
+  - Usage ( listing all the commands and how to use them )
+  - Stack ( the tech stack used in the project )
+  - Folder Structure ( the folder structure of the project only the important ones inside src )
+
+## Testing
+
+- Use Jest and React Native Testing Library.
+- Write unit tests for utilities and complex components.
+- Test files: component-name.test.tsx.
+- No tests for simple display-only components.
+
+## Package Management
+
+- Use `npx expo install <package-name>` for new packages.
+
+## Message Passing
+
+- Use strict TypeScript discriminated unions for message types.
